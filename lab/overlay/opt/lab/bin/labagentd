@@ -58,7 +58,13 @@ while IFS= read -r line; do
         # dell'esercizio (o del seme) precedente falsano la verifica, e un trucco
         # puo' passare grazie a un file rimasto li' per sbaglio.
         seed)
-            rm -rf "$LAB"; mkdir -p "$LAB" "$STATE"
+            # NON `rm -rf "$LAB"`: se la shell dell'utente e' dentro quella cartella,
+            # cancellarla lo lascia in una directory che non esiste piu' e ogni `ls`
+            # risponde "cannot open directory '.'". (E' proprio il fenomeno che il
+            # capitolo 2 spiega nella parte PRO — sarebbe grottesco causarlo noi.)
+            # Si svuota il contenuto e si tiene l'inode.
+            mkdir -p "$LAB" "$STATE"
+            find "$LAB" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null
             # via ogni traccia dell'esercizio precedente: risposte consegnate,
             # valori memorizzati dal seed, tutto. Resta solo il seme, che scriviamo ora.
             find "$STATE" -maxdepth 1 -type f ! -name current -delete 2>/dev/null
@@ -75,7 +81,8 @@ while IFS= read -r line; do
             ;;
         # reset <dir> : ricomincia da capo con lo STESSO seme
         reset)
-            rm -rf "$LAB"; mkdir -p "$LAB"; rm -f "$STATE/answer"
+            mkdir -p "$LAB"; find "$LAB" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null
+            rm -f "$STATE/answer"
             out=$(run_lab "/opt/lab/$1/seed.sh"); reply "$id" $? "$out"
             ;;
         write)

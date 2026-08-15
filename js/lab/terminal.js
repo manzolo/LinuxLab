@@ -47,5 +47,25 @@ export function adatta(contenitore) {
 }
 
 export const terminale = () => term;
-export const scriviNota = testo => term?.write(`\r\n\x1b[38;5;179m${testo}\x1b[0m\r\n`);
+
+/** Svuota lo schermo e lo scrollback. Serve al "Reimposta la macchina": senza,
+ *  lo stato torna indietro ma a schermo resta tutto com'era, e sembra non sia
+ *  successo niente. */
+export function pulisciTerminale() { term?.reset(); }
+
+/** Una riga che si vede. Le azioni dei pulsanti agiscono sul filesystem, quindi
+ *  senza un segno a schermo sembrano non fare nulla finche' non digiti `ls`. */
+export function scriviNota(testo, colore = 179) {
+    if (!term) return;
+    const larghezza = Math.max(20, (term.cols || 80) - 2);
+    const riga = ` ${testo} `.padEnd(larghezza, "─");
+    term.write(`\r\n\x1b[38;5;${colore}m${"─".repeat(2)}${riga}\x1b[0m\r\n`);
+}
+/** Scrive un blocco informativo nel terminale, smorzato, senza toccare la riga
+ *  che l'utente sta scrivendo. */
+export function scriviBlocco(testo) {
+    if (!term || !testo) return;
+    for (const r of String(testo).split("\n")) term.write(`\x1b[38;5;245m  ${r}\x1b[0m\r\n`);
+}
+
 export const svegliaTerminale = () => risveglia();

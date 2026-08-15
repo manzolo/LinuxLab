@@ -92,5 +92,8 @@ export function risveglia() {
 export async function reimposta() {
     if (!emulatore || !statoIniziale) return;
     await emulatore.restore_state(statoIniziale.slice().buffer);
+    // Il ripristino azzera anche l'agente: aspetta che sia di nuovo raggiungibile
+    // prima di dire "pronta", altrimenti il primo `Verifica` dopo il reset fallisce.
+    await new Promise(r => setTimeout(r, 400));
     risveglia();
 }

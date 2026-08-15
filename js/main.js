@@ -4,11 +4,11 @@ import { initLang, setLang, getLang, onLangChange, refreshStatic, t } from "./i1
 import { get, set, progressiFatti } from "./storage.js";
 import { CAPITOLI, capitolo, primoCapitolo } from "../content/index.js";
 import { disegnaCapitolo } from "./ui/chapter.js";
-import { inizializzaEsercizi, disegnaEsercizi, macchinaPronta } from "./ui/exercises.js";
+import { inizializzaEsercizi, disegnaEsercizi, macchinaPronta, esercizioCorrente } from "./ui/exercises.js";
 import { apriSommario, apriIntro, apriQuaderno } from "./ui/overlays.js";
 import { avvia, onProgresso, reimposta } from "./lab/machine.js";
 import { attendiAgente } from "./lab/agent.js";
-import { creaTerminale, adatta } from "./lab/terminal.js";
+import { creaTerminale, adatta, pulisciTerminale, scriviNota } from "./lab/terminal.js";
 
 const $ = id => document.getElementById(id);
 let idCorrente = null;
@@ -102,10 +102,24 @@ onProgresso((fase, frazione) => {
     if (fase === "pronta") { stato.textContent = t("labPronta"); stato.className = "lab-stato pronta"; }
 });
 
+// Reimposta la macchina: il ripristino dello snapshot blocca la pagina per qualche
+// secondo, e senza segni a schermo sembra che non sia successo niente — lo scrollback
+// resta identico. Quindi: bottone occupato, terminale SVUOTATO, banner, e l'esercizio
+// corrente riseminato (dopo il ripristino il suo mondo non c'e' piu').
 $("btnReimposta").onclick = async () => {
+    const btn = $("btnReimposta");
+    const testo = btn.textContent;
+    btn.disabled = true; btn.textContent = "…";
     stato.textContent = "…";
-    await reimposta();
-    stato.textContent = t("labPronta");
+    try {
+        await reimposta();
+        pulisciTerminale();
+        scriviNota(t("labReimposta"), 79);
+        await riseminaEsercizioCorrente();
+    } finally {
+        btn.disabled = false; btn.textContent = testo;
+        stato.textContent = t("labPronta");
+    }
 };
 
 // Su telefono il terminale c'e' ma non e' praticabile: meglio dirlo che fingere.
@@ -118,6 +132,17 @@ if (soloTocco) {
 }
 
 inizializzaEsercizi($("esercizi"), aggiornaProgresso);
+
+// Dopo un ripristino della macchina, il mondo dell'esercizio aperto e' sparito
+// insieme al resto: va riseminato, o il primo `Verifica` fallirebbe senza motivo.
+async function riseminaEsercizioCorrente() {
+    const cap = await capitolo(idCorrente).catch(() => null);
+    const es = esercizioCorrente();
+    if (!cap || !es || cap.runtime === "local") return;
+    const { preparaEsercizio } = await import("./lab/runner.js");
+    const { semePer } = await import("./storage.js");
+    await preparaEsercizio(cap.id, es.id, semePer(`${cap.id}.${es.id}`)).catch(() => {});
+}
 
 (async () => {
     const daUrl = new URLSearchParams(location.search).get("ch");
@@ -144,4 +169,5 @@ addEventListener("resize", () => adatta($("terminale")));
 // Gancio per i test end-to-end (tools/e2e.mjs). Non e' un'API pubblica.
 import * as agente from "./lab/agent.js";
 import * as runner from "./lab/runner.js";
-window.__linuxlab = { agente, runner, vaiA, capitolo, get stato() { return stato.textContent; } };
+import * as termmod from "./lab/terminal.js";
+window.__linuxlab = { agente, runner, term: termmod, vaiA, capitolo, get stato() { return stato.textContent; } };

@@ -10,7 +10,8 @@
 import { t, tr } from "../i18n.js";
 import { preparaEsercizio, verificaEsercizio, ricominciaEsercizio } from "../lab/runner.js";
 import { semePer, nuovoSeme, segnaFatto, eFatto, annotaComandi } from "../storage.js";
-import { scriviNota } from "../lab/terminal.js";
+import { scriviNota, scriviBlocco, pulisciTerminale } from "../lab/terminal.js";
+import { shell } from "../lab/agent.js";
 
 const el = (tag, cls, html) => {
     const n = document.createElement(tag);
@@ -111,15 +112,17 @@ async function apri(cap, es, box) {
     corpo.append(zona);
     corpo.append(costruisciAiuti(es));
 
-    if (!pronta) { btnVer.disabled = btnRic.disabled = btnNuo.disabled = true; }
+    // I pulsanti restano spenti finche' il mondo non e' pronto. Prima erano
+    // cliccabili ma senza gestore — perche' gli onclick venivano assegnati DOPO
+    // l'await qui sotto — e cliccarli non faceva letteralmente niente.
+    // (Segnalato da Andrea il 2026-08-16: «mi sembrano non fare niente».)
+    btnVer.disabled = btnRic.disabled = btnNuo.disabled = true;
 
     // Prepara il mondo dell'esercizio nella macchina.
     const prepara = async (seme) => {
         try { await preparaEsercizio(cap.id, es.id, seme); }
         catch (e) { zona.replaceChildren(el("div", "controllo fail", e.message)); }
     };
-    if (pronta) await prepara(semePer(`${cap.id}.${es.id}`));
-
     btnVer.onclick = async () => {
         btnVer.disabled = true;
         const testo = btnVer.textContent;
@@ -133,16 +136,41 @@ async function apri(cap, es, box) {
             btnVer.disabled = false; btnVer.textContent = testo;
         }
     };
-    btnRic.onclick = async () => {
-        await ricominciaEsercizio(cap.id, es.id);
-        zona.replaceChildren();
-        scriviNota(t("labRicomincia"));
+    // Ricomincia e Nuovo mondo agiscono sul filesystem della macchina: senza un
+    // segno a schermo sembrano non fare niente finche' non digiti `ls`. Quindi:
+    // pulsante occupato mentre lavora, banner nel terminale, e un `ls` mandato dal
+    // canale di servizio cosi' il nuovo mondo si VEDE subito.
+    // Fa vedere com'e' fatto il mondo adesso. L'`ls` lo esegue il canale di
+    // servizio e il risultato viene STAMPATO nel terminale: non viene digitato,
+    // cosi' non si mescola a quello che l'utente sta scrivendo.
+    const mostraContenuto = async () => {
+        try {
+            const r = await shell('ls -a --group-directories-first "$LAB" 2>/dev/null | tail -n +3');
+            scriviBlocco(r.out?.trim() || "(la cartella è vuota)");
+        } catch { /* se non risponde, pazienza: il banner c'e' comunque */ }
     };
-    btnNuo.onclick = async () => {
-        await prepara(nuovoSeme(`${cap.id}.${es.id}`));
-        zona.replaceChildren();
-        scriviNota(t("labNuovoMondo"));
+
+    const conAttesa = async (btn, azione, nota) => {
+        const testo = btn.textContent;
+        btn.disabled = true; btn.textContent = "…";
+        try {
+            await azione();
+            zona.replaceChildren();
+            scriviNota(nota, 79);
+            await mostraContenuto();
+        } catch (e) {
+            zona.replaceChildren(el("div", "controllo fail", e.message));
+        } finally { btn.disabled = false; btn.textContent = testo; }
     };
+    btnRic.onclick = () => conAttesa(btnRic, () => ricominciaEsercizio(cap.id, es.id), t("labRicomincia"));
+    btnNuo.onclick = () => conAttesa(btnNuo, () => prepara(nuovoSeme(`${cap.id}.${es.id}`)), t("labNuovoMondo"));
+
+    // Solo adesso, con i gestori gia' collegati, si prepara il mondo e si accendono
+    // i pulsanti. L'ordine e' la correzione: prima i gestori, poi l'attesa.
+    if (pronta) {
+        await prepara(semePer(`${cap.id}.${es.id}`));
+        btnVer.disabled = btnRic.disabled = btnNuo.disabled = false;
+    }
 }
 
 function disegnaVerdetto(cap, es, v, box) {
