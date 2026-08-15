@@ -1,0 +1,8 @@
+#silenzio nft delete table inet demo 2>/dev/null; nft add table inet demo; nft add chain inet demo input '{ type filter hook input priority 0; policy drop; }'; nft add rule inet demo input ct state established,related accept; nft add rule inet demo input iif lo accept; nft add rule inet demo input tcp dport { 22, 80 } accept
+#nota Si legge dall'alto in basso, e la prima regola che corrisponde decide. La policy vale solo se non corrisponde nessuna. | Read top to bottom: the first matching rule decides. The policy applies only if none match.
+nft list ruleset
+#nota Cosa e' esposto davvero. 127.0.0.1 e' gia' chiuso al mondo senza bisogno di regole. | What is actually exposed. 127.0.0.1 is already closed to the world with no rules at all.
+ss -tulpn | head -6
+#nota I binari setuid girano con i privilegi del proprietario. L'elenco legittimo e' corto: vale la pena guardarlo. | setuid binaries run with the owner's privileges. The legitimate list is short: worth looking at.
+find /usr/bin /usr/sbin -perm -4000 -type f 2>/dev/null | head -8
+#silenzio nft delete table inet demo 2>/dev/null

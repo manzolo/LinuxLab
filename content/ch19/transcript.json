@@ -1,0 +1,46 @@
+{
+  "generato": "da tools/gen-transcript.mjs — non modificare a mano",
+  "steps": [
+    {
+      "cmd": "nginx -t",
+      "out": "",
+      "note": {
+        "it": "Prima di ogni reload. Se non passa il test, il reload non si fa.",
+        "en": "Before every reload. If the test fails, you do not reload."
+      }
+    },
+    {
+      "cmd": "systemctl reload nginx",
+      "out": "",
+      "note": {
+        "it": "reload rilegge senza chiudere: le connessioni in corso non se ne accorgono.",
+        "en": "reload re-reads without closing: ongoing connections never notice."
+      }
+    },
+    {
+      "cmd": "curl -sI http://localhost/ | head -3",
+      "out": "HTTP/1.1 200 OK\r\nServer: nginx\r\nDate: Sat, 15 Aug 2026 22:01:58 GMT",
+      "note": {
+        "it": "La prova che conta: qualcuno risponde davvero.",
+        "en": "The test that counts: somebody actually answers."
+      }
+    },
+    {
+      "cmd": "sshd -T | grep -iE '^(passwordauthentication|permitrootlogin|pubkeyauthentication)'",
+      "out": "permitrootlogin without-password\npubkeyauthentication yes\npasswordauthentication yes",
+      "note": {
+        "it": "Non si legge sshd_config: si chiede a sshd cosa applica DAVVERO, default inclusi.",
+        "en": "You do not read sshd_config: you ask sshd what it really applies, defaults included."
+      },
+      "mark": "passwordauthentication"
+    },
+    {
+      "cmd": "ls -ld /root /root/.ssh 2>/dev/null || echo \"(nessuna .ssh ancora)\"",
+      "out": "drwx------ 1 root root 4096 Aug 15 22:01 /root\ndrwx------ 2 root root 4096 Aug 15 21:55 /root/.ssh",
+      "note": {
+        "it": "E questi sono i permessi che sshd pretende su authorized_keys, o rifiuta di usarlo.",
+        "en": "And these are the permissions sshd demands on authorized_keys, or it refuses to use it."
+      }
+    }
+  ]
+}

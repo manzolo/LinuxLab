@@ -1,0 +1,12 @@
+#nota Prima di ogni reload. Se non passa il test, il reload non si fa. | Before every reload. If the test fails, you do not reload.
+nginx -t
+#silenzio systemctl start nginx
+#nota reload rilegge senza chiudere: le connessioni in corso non se ne accorgono. | reload re-reads without closing: ongoing connections never notice.
+systemctl reload nginx
+#nota La prova che conta: qualcuno risponde davvero. | The test that counts: somebody actually answers.
+curl -sI http://localhost/ | head -3
+#mark passwordauthentication
+#nota Non si legge sshd_config: si chiede a sshd cosa applica DAVVERO, default inclusi. | You do not read sshd_config: you ask sshd what it really applies, defaults included.
+sshd -T | grep -iE '^(passwordauthentication|permitrootlogin|pubkeyauthentication)'
+#nota E questi sono i permessi che sshd pretende su authorized_keys, o rifiuta di usarlo. | And these are the permissions sshd demands on authorized_keys, or it refuses to use it.
+ls -ld /root /root/.ssh 2>/dev/null || echo "(nessuna .ssh ancora)"

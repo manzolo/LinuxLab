@@ -1,0 +1,29 @@
+{
+  "generato": "da tools/gen-transcript.mjs — non modificare a mano",
+  "steps": [
+    {
+      "cmd": "nft list ruleset",
+      "out": "table inet demo {\n\tchain input {\n\t\ttype filter hook input priority filter; policy drop;\n\t\tct state established,related accept\n\t\tiif \"lo\" accept\n\t\ttcp dport { 22, 80 } accept\n\t}\n}",
+      "note": {
+        "it": "Si legge dall'alto in basso, e la prima regola che corrisponde decide. La policy vale solo se non corrisponde nessuna.",
+        "en": "Read top to bottom: the first matching rule decides. The policy applies only if none match."
+      }
+    },
+    {
+      "cmd": "ss -tulpn | head -6",
+      "out": "Netid State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess                                                                                                                                                                                                                                                                                                                                                                                                       \ntcp   LISTEN 0      511          0.0.0.0:80        0.0.0.0:*    users:((\"nginx\",pid=308,fd=5),(\"nginx\",pid=307,fd=5),(\"nginx\",pid=306,fd=5),(\"nginx\",pid=305,fd=5),(\"nginx\",pid=304,fd=5),(\"nginx\",pid=303,fd=5),(\"nginx\",pid=302,fd=5),(\"nginx\",pid=301,fd=5),(\"nginx\",pid=300,fd=5),(\"nginx\",pid=299,fd=5),(\"nginx\",pid=298,fd=5),(\"nginx\",pid=297,fd=5),(\"nginx\",pid=296,fd=5),(\"nginx\",pid=295,fd=5),(\"nginx\",pid=294,fd=5),(\"nginx\",pid=292,fd=5),(\"nginx\",pid=99,fd=5))\ntcp   LISTEN 0      128          0.0.0.0:22        0.0.0.0:*    users:((\"sshd\",pid=94,fd=6))                                                                                                                                                                                                                                                                                                                                                                                 \ntcp   LISTEN 0      511             [::]:80           [::]:*    users:((\"nginx\",pid=308,fd=6),(\"nginx\",pid=307,fd=6),(\"nginx\",pid=306,fd=6),(\"nginx\",pid=305,fd=6),(\"nginx\",pid=304,fd=6),(\"nginx\",pid=303,fd=6),(\"nginx\",pid=302,fd=6),(\"nginx\",pid=301,fd=6),(\"nginx\",pid=300,fd=6),(\"nginx\",pid=299,fd=6),(\"nginx\",pid=298,fd=6),(\"nginx\",pid=297,fd=6),(\"nginx\",pid=296,fd=6),(\"nginx\",pid=295,fd=6),(\"nginx\",pid=294,fd=6),(\"nginx\",pid=292,fd=6),(\"nginx\",pid=99,fd=6))\ntcp   LISTEN 0      128             [::]:22           [::]:*    users:((\"sshd\",pid=94,fd=7))",
+      "note": {
+        "it": "Cosa e' esposto davvero. 127.0.0.1 e' gia' chiuso al mondo senza bisogno di regole.",
+        "en": "What is actually exposed. 127.0.0.1 is already closed to the world with no rules at all."
+      }
+    },
+    {
+      "cmd": "find /usr/bin /usr/sbin -perm -4000 -type f 2>/dev/null | head -8",
+      "out": "/usr/bin/chfn\n/usr/bin/su\n/usr/bin/chsh\n/usr/bin/passwd\n/usr/bin/newgrp\n/usr/bin/umount\n/usr/bin/gpasswd\n/usr/bin/mount",
+      "note": {
+        "it": "I binari setuid girano con i privilegi del proprietario. L'elenco legittimo e' corto: vale la pena guardarlo.",
+        "en": "setuid binaries run with the owner's privileges. The legitimate list is short: worth looking at."
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "generato": "da tools/gen-transcript.mjs — non modificare a mano",
+  "steps": [
+    {
+      "cmd": "cat /etc/systemd/system/miaapp.service",
+      "out": "[Unit]\nDescription=La mia applicazione\n[Service]\nExecStart=/usr/local/bin/miaapp.sh\nRestart=always\n[Install]\nWantedBy=multi-user.target",
+      "note": {
+        "it": "Cinque righe di testo, e il sistema sa cosa deve tenere acceso.",
+        "en": "Five lines of text, and the system knows what to keep running."
+      }
+    },
+    {
+      "cmd": "systemctl daemon-reload",
+      "out": "",
+      "note": {
+        "it": "daemon-reload rilegge i file: senza, systemd usa ancora la versione precedente.",
+        "en": "daemon-reload re-reads the files: without it, systemd still uses the previous version."
+      }
+    },
+    {
+      "cmd": "systemctl enable --now miaapp",
+      "out": "",
+      "note": {
+        "it": "enable --now fa le due cose insieme: avvia adesso E abilita al prossimo avvio.",
+        "en": "enable --now does both: start now AND enable at next boot."
+      }
+    },
+    {
+      "cmd": "systemctl status miaapp --no-pager",
+      "out": "● miaapp.service - La mia applicazione\n     Loaded: loaded (/etc/systemd/system/miaapp.service; enabled; preset: enabled)\n     Active: active (running) since Sat 2026-08-15 22:01:57 UTC; 92ms ago\n Invocation: fd92821f52ae40f1bc7d7b02828135ba\n   Main PID: 201 (miaapp.sh)\n      Tasks: 2 (limit: 5639)\n     Memory: 540K (peak: 1.7M)\n        CPU: 9ms\n     CGroup: /system.slice/miaapp.service\n             ├─201 /bin/sh /usr/local/bin/miaapp.sh\n             └─202 sleep 30\n\nAug 15 22:01:57 47c80d126ece systemd[1]: Started miaapp.service - La mia applicazione.",
+      "note": {
+        "it": "La riga Active: e' la prima da leggere, sempre. Sotto ci sono le ultime righe di log.",
+        "en": "The Active: line is the first to read, always. Below it are the last log lines."
+      },
+      "mark": "Active: active (running)"
+    },
+    {
+      "cmd": "journalctl -u miaapp -n 5 --no-pager",
+      "out": "Aug 15 22:01:57 47c80d126ece systemd[1]: Started miaapp.service - La mia applicazione.",
+      "note": {
+        "it": "Il journal per singolo servizio: niente piu' grep dentro un file da un milione di righe.",
+        "en": "The per-service journal: no more grepping inside a million-line file."
+      }
+    },
+    {
+      "cmd": "systemctl show miaapp -p ControlGroup -p MainPID",
+      "out": "MainPID=201\nControlGroup=/system.slice/miaapp.service",
+      "note": {
+        "it": "E questa e' la prova del cgroup: systemd sa che quei processi sono suoi.",
+        "en": "And this is the cgroup at work: systemd knows those processes are its own."
+      }
+    }
+  ]
+}

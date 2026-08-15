@@ -1,0 +1,13 @@
+#silenzio for n in 1 2; do lab-loop /root/demo-$n.img 100; done > /tmp/demoloop
+#nota Due file diventati dischi. Nessun disco vero e' stato toccato. | Two files turned into disks. No real disk was touched.
+cat /tmp/demoloop; losetup -a | grep demo
+#silenzio L=$(tr '\n' ' ' < /tmp/demoloop); pvcreate -y -ff $L >/dev/null 2>&1; vgcreate demo-vg $L >/dev/null 2>&1; lvcreate -y -Zn -L 40M -n demo-lv demo-vg >/dev/null 2>&1; vgscan --mknodes >/dev/null 2>&1; mkfs.ext4 -qF /dev/demo-vg/demo-lv; mkdir -p /mnt/demo; mount /dev/demo-vg/demo-lv /mnt/demo; echo dati > /mnt/demo/file.txt
+#nota Il magazzino: due dischi diventati uno spazio solo. | The warehouse: two disks become a single space.
+vgs demo-vg
+#nota Il volume ritagliato dentro, e i dati che ci abbiamo scritto. | The volume carved inside, and the data we wrote in it.
+lvs demo-vg; df -h /mnt/demo | tail -1
+#nota Adesso lo allarghiamo A CALDO: il volume e' montato e in uso. La -r ridimensiona anche il filesystem. | Now we grow it HOT: the volume is mounted and in use. The -r resizes the filesystem too.
+lvextend -r -L 80M /dev/demo-vg/demo-lv
+#nota Cresciuto, e il file e' ancora li'. Questo e' il motivo per cui LVM esiste. | Grown, and the file is still there. This is why LVM exists.
+df -h /mnt/demo | tail -1; cat /mnt/demo/file.txt
+#silenzio umount /mnt/demo 2>/dev/null; vgchange -an demo-vg 2>/dev/null; vgremove -f demo-vg 2>/dev/null; for l in $(cat /tmp/demoloop; losetup -a | grep demo | cut -d: -f1); do losetup -d $l; done; rm -f /root/demo-*.img

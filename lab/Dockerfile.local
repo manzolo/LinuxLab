@@ -1,0 +1,49 @@
+# EDU-LINUX · Linux Lab — laboratorio locale, capitoli 17-22.
+#
+# Perche' NON e' la stessa immagine del browser: Alpine usa OpenRC, non systemd,
+# e v86 puo' eseguire solo x86 a 32 bit. Un'immagine Alpine non puo' insegnare
+# `systemctl`. Quindi due Dockerfile e un solo overlay condiviso — e la differenza
+# diventa materiale del capitolo 17: OpenRC (quello che hai usato nel browser)
+# contro systemd (quello che troverai al lavoro).
+FROM debian:trixie-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV container=docker
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        systemd systemd-sysv dbus \
+        nginx openssh-server openssh-client \
+        nftables iproute2 iputils-ping curl wget dnsutils tcpdump \
+        lvm2 mdadm e2fsprogs util-linux procps psmisc \
+        cron logrotate rsyslog \
+        vim less man-db manpages jq bc sudo file tree \
+    && rm -rf /var/lib/apt/lists/*
+
+# systemd in un container: i servizi che non hanno senso qui vanno tolti,
+# altrimenti l'avvio si impunta o riempie il journal di errori.
+RUN systemctl mask \
+        systemd-udevd.service systemd-udev-trigger.service \
+        systemd-firstboot.service systemd-resolved.service \
+        sys-kernel-config.mount sys-kernel-debug.mount sys-kernel-tracing.mount \
+    && systemctl enable ssh nginx 2>/dev/null || true
+
+# Senza udev, LVM non riesce a creare i nodi dei volumi: glielo si dice.
+# (Il piano lo aveva previsto: "senza udev i nodi in /dev/mapper a volte non
+# compaiono e servono dmsetup mknodes".)
+RUN mkdir -p /etc/lvm && printf '%s\n' \
+    'devices { obtain_device_list_from_udev = 0 }' \
+    'activation { udev_sync = 0 udev_rules = 0 }' \
+    > /etc/lvm/lvmlocal.conf
+
+COPY overlay/ /
+RUN chmod +x /opt/lab/bin/* /opt/lab/lib/labcheck.sh 2>/dev/null || true
+
+# L'agente seriale serve solo nel browser: qui l'utente digita `lab check` a mano.
+RUN rm -f /opt/lab/bin/labagentd
+
+RUN useradd -m -s /bin/bash studente && echo 'studente:lab' | chpasswd && \
+    usermod -aG sudo studente && \
+    mkdir -p /root/lab && chown -R studente:studente /home/studente
+
+STOPSIGNAL SIGRTMIN+3
+CMD ["/sbin/init"]

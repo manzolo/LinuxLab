@@ -1,0 +1,45 @@
+{
+  "generato": "da tools/gen-transcript.mjs — non modificare a mano",
+  "steps": [
+    {
+      "cmd": "cat /tmp/demoloop; losetup -a | grep demo",
+      "out": "/dev/loop64\n/dev/loop65\n/dev/loop65: [0153]:20593806 (/root/demo-2.img)\n/dev/loop64: [0153]:20593805 (/root/demo-1.img)",
+      "note": {
+        "it": "Due file diventati dischi. Nessun disco vero e' stato toccato.",
+        "en": "Two files turned into disks. No real disk was touched."
+      }
+    },
+    {
+      "cmd": "vgs demo-vg",
+      "out": "  VG      #PV #LV #SN Attr   VSize   VFree  \n  demo-vg   2   1   0 wz--n- 192.00m 152.00m",
+      "note": {
+        "it": "Il magazzino: due dischi diventati uno spazio solo.",
+        "en": "The warehouse: two disks become a single space."
+      }
+    },
+    {
+      "cmd": "lvs demo-vg; df -h /mnt/demo | tail -1",
+      "out": "  LV      VG      Attr       LSize  Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert\n  demo-lv demo-vg -wi-ao---- 40.00m                                                    \n/dev/mapper/demo--vg-demo--lv   33M   47K   30M   1% /mnt/demo",
+      "note": {
+        "it": "Il volume ritagliato dentro, e i dati che ci abbiamo scritto.",
+        "en": "The volume carved inside, and the data we wrote in it."
+      }
+    },
+    {
+      "cmd": "lvextend -r -L 80M /dev/demo-vg/demo-lv",
+      "out": "  File system ext4 found on demo-vg/demo-lv mounted at /mnt/demo.\n  Size of logical volume demo-vg/demo-lv changed from 40.00 MiB (10 extents) to 80.00 MiB (20 extents).\n  Extending file system ext4 to 80.00 MiB (83886080 bytes) on demo-vg/demo-lv...\nresize2fs /dev/demo-vg/demo-lv\nFilesystem at /dev/demo-vg/demo-lv is mounted on /mnt/demo; on-line resizing required\nold_desc_blocks = 1, new_desc_blocks = 1\nThe filesystem on /dev/demo-vg/demo-lv is now 81920 (1k) blocks long.\n\nresize2fs done\n  Extended file system ext4 on demo-vg/demo-lv.\n  Logical volume demo-vg/demo-lv successfully resized.",
+      "note": {
+        "it": "Adesso lo allarghiamo A CALDO: il volume e' montato e in uso. La -r ridimensiona anche il filesystem.",
+        "en": "Now we grow it HOT: the volume is mounted and in use. The -r resizes the filesystem too."
+      }
+    },
+    {
+      "cmd": "df -h /mnt/demo | tail -1; cat /mnt/demo/file.txt",
+      "out": "/dev/mapper/demo--vg-demo--lv   70M   47K   66M   1% /mnt/demo\ndati",
+      "note": {
+        "it": "Cresciuto, e il file e' ancora li'. Questo e' il motivo per cui LVM esiste.",
+        "en": "Grown, and the file is still there. This is why LVM exists."
+      }
+    }
+  ]
+}

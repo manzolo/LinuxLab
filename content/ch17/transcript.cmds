@@ -1,0 +1,15 @@
+#silenzio printf '#!/bin/sh\nwhile :; do sleep 30; done\n' > /usr/local/bin/miaapp.sh; chmod 755 /usr/local/bin/miaapp.sh
+#silenzio printf '[Unit]\nDescription=La mia applicazione\n[Service]\nExecStart=/usr/local/bin/miaapp.sh\nRestart=always\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/miaapp.service
+#nota Cinque righe di testo, e il sistema sa cosa deve tenere acceso. | Five lines of text, and the system knows what to keep running.
+cat /etc/systemd/system/miaapp.service
+#nota daemon-reload rilegge i file: senza, systemd usa ancora la versione precedente. | daemon-reload re-reads the files: without it, systemd still uses the previous version.
+systemctl daemon-reload
+#nota enable --now fa le due cose insieme: avvia adesso E abilita al prossimo avvio. | enable --now does both: start now AND enable at next boot.
+systemctl enable --now miaapp
+#mark Active: active (running)
+#nota La riga Active: e' la prima da leggere, sempre. Sotto ci sono le ultime righe di log. | The Active: line is the first to read, always. Below it are the last log lines.
+systemctl status miaapp --no-pager
+#nota Il journal per singolo servizio: niente piu' grep dentro un file da un milione di righe. | The per-service journal: no more grepping inside a million-line file.
+journalctl -u miaapp -n 5 --no-pager
+#nota E questa e' la prova del cgroup: systemd sa che quei processi sono suoi. | And this is the cgroup at work: systemd knows those processes are its own.
+systemctl show miaapp -p ControlGroup -p MainPID
