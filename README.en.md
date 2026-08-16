@@ -19,6 +19,24 @@ it back to new in half a second.
 You read on the left, you try on the right. Every chapter has exercises the machine
 **really checks**, by looking at how its filesystem ended up.
 
+![The chapter and the terminal, side by side](img/capitolo.png)
+
+## When you get it wrong, we do not say "no"
+
+![A verdict that teaches](img/verdetto.png)
+
+Every failed check gives you three things, in this order: **the fact** measured by the machine
+(`got=… want=…`), **the why** in one sentence, and **a command to look at the problem** — not
+the solution. After ten exercises you are left with the reflex that is the whole trade: look
+first, change second.
+
+## And before you try, the picture
+
+![The exercise help](img/aiuto.png)
+
+Every exercise has a help panel telling you what the check will look at and which commands you
+need. The real hints stay below, and open one at a time.
+
 ## How the anti-cheat works
 
 In this lab's sibling projects the engine is made of paper, so checking can compare outputs.
@@ -33,10 +51,6 @@ generated name. The five most frequent IPs cannot be typed by hand because you h
 seen them. In the scripting chapters the check **runs your script on cases you have never
 seen**, and the capstone runs it on a machine reset to its initial state: if you did it all
 by hand, it does not pass.
-
-And when you get something wrong we do not say "no": we hand you **a command to look at the
-problem**. After ten exercises you have internalised the reflex that is the trade itself:
-look first, change second.
 
 ## The programme
 

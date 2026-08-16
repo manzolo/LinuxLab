@@ -53,6 +53,13 @@ RUN apk update && \
 COPY overlay/ /
 RUN chmod +x /opt/lab/bin/*
 
+# `crontab` fa chdir("/var/spool/cron/crontabs"). Su Alpine quel percorso e' un
+# symlink RELATIVO (../../../etc/crontabs), e su 9p la risoluzione di quei `..`
+# non e' affidabile: in locale funzionava, sul runner della CI no, e crontab
+# rispondeva "can't change directory" fallendo in silenzio. Un symlink ASSOLUTO
+# toglie ogni ambiguita'.
+RUN ln -sfn /etc/crontabs /var/spool/cron/crontabs
+
 # Senza questo `apropos` e `man -k` non funzionano: e' materiale del capitolo 01.
 RUN makewhatis /usr/share/man 2>/dev/null || true
 

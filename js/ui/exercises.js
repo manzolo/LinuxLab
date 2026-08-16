@@ -96,9 +96,26 @@ async function apri(cap, es, box) {
         };
         box2.append(b);
         corpo.append(box2);
+        const bA = el("button", "btn mini", t("aiuto"));
+        const zA = el("div");
+        bA.onclick = () => {
+            if (zA.firstChild) { zA.replaceChildren(); bA.textContent = t("aiuto"); }
+            else { zA.append(costruisciAiuto(cap, es)); bA.textContent = t("aiutoChiudi"); }
+        };
+        corpo.append(bA, zA);
         corpo.append(costruisciAiuti(es));
         return;
     }
+
+    // L'aiuto sta subito sotto la consegna, prima dei pulsanti: e' roba da leggere,
+    // non da premere quando si e' gia' bloccati.
+    const zonaAiuto = el("div");
+    const btnAiuto = el("button", "btn mini", t("aiuto"));
+    btnAiuto.onclick = () => {
+        if (zonaAiuto.firstChild) { zonaAiuto.replaceChildren(); btnAiuto.textContent = t("aiuto"); }
+        else { zonaAiuto.append(costruisciAiuto(cap, es)); btnAiuto.textContent = t("aiutoChiudi"); }
+    };
+    corpo.append(btnAiuto, zonaAiuto);
 
     const barra = el("div", "es-barra");
     const btnVer = el("button", "btn primario", t("verifica"));
@@ -226,6 +243,54 @@ function disegnaVerdetto(cap, es, v, box) {
         alCambio();
     }
     return fuori;
+}
+
+
+/**
+ * L'aiuto dell'esercizio. Non e' un quarto suggerimento: e' il QUADRO, e si legge
+ * PRIMA di provare — mentre i suggerimenti danno la direzione, uno alla volta.
+ *
+ * Non contiene prosa scritta apposta: mette insieme cose che gia' esistono e sono
+ * gia' verificate bilingui — il perche' di ogni controllo (che prima si vedeva
+ * solo dopo aver sbagliato) e il riepilogo dei comandi del capitolo. Cosi' non
+ * puo' invecchiare separatamente dal resto.
+ */
+function costruisciAiuto(cap, es) {
+    const box = el("div", "aiuto-pannello");
+
+    const tipo = { stato: "aiutoTipoStato", risposta: "aiutoTipoRisposta", metodo: "aiutoTipoMetodo" }[es.tipo];
+    if (tipo) box.append(el("p", "aiuto-tipo", t(tipo)));
+
+    // Cosa guardera' la verifica: gli stessi "perche'" del verdetto, ma prima.
+    const proAttivo = document.body.classList.contains("pro");
+    const controlli = (es.checks || []).filter(c => !c.pro || proAttivo);
+    if (controlli.length) {
+        box.append(el("h4", null, t("aiutoVerifica")));
+        const ul = el("ul", "aiuto-check");
+        for (const c of controlli) {
+            const li = el("li");
+            li.append(el("code", null, escapa(c.id)));
+            li.insertAdjacentHTML("beforeend", " — " + tr(c.why));
+            ul.append(li);
+        }
+        box.append(ul);
+    }
+
+    // I comandi del capitolo, dal riepilogo che il capitolo ha gia'.
+    const recap = (cap.blocks || []).find(b => b.kind === "recap");
+    if (recap?.table?.length) {
+        box.append(el("h4", null, t("aiutoComandi")));
+        const tb = el("table", "aiuto-comandi");
+        for (const r of recap.table) {
+            const riga = el("tr");
+            riga.append(el("td", null, escapa(r.cmd)), el("td", null, tr(r.what)), el("td", null, tr(r.flag)));
+            tb.append(riga);
+        }
+        box.append(tb);
+    }
+
+    box.append(el("p", "aiuto-nota", t("aiutoNota")));
+    return box;
 }
 
 // Suggerimenti progressivi: si aprono uno alla volta, l'ultimo e' la soluzione.

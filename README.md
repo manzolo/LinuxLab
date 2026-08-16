@@ -19,6 +19,24 @@ rimette a nuovo in mezzo secondo.
 A sinistra si legge, a destra si prova. Ogni capitolo ha esercizi che la macchina
 **verifica davvero**, guardando com'è finito il suo filesystem.
 
+![Il capitolo e il terminale, fianco a fianco](img/capitolo.png)
+
+## Quando sbagli non ti diciamo «no»
+
+![Un verdetto che insegna](img/verdetto.png)
+
+Ogni controllo fallito dà tre cose, in quest'ordine: **il fatto** misurato dalla macchina
+(`got=… want=…`), **il perché** in una frase, e **un comando per guardare il problema** — non
+la soluzione. Dopo dieci esercizi ti resta il riflesso che è tutto il mestiere: prima guardo,
+poi cambio.
+
+## E prima di provare, il quadro
+
+![L'aiuto dell'esercizio](img/aiuto.png)
+
+Ogni esercizio ha un aiuto che dice cosa guarderà la verifica e quali comandi ti servono. I
+suggerimenti veri restano sotto, e si aprono uno alla volta.
+
 ## Come funziona l'anti-trucco
 
 Nei fratelli della collana EDU-\* il motore è di carta, quindi la verifica può confrontare
@@ -33,9 +51,6 @@ generato. I cinque IP più frequenti non li puoi scrivere a mano perché non li 
 capitoli sugli script la verifica **esegue il tuo script su casi che non hai mai visto**, e
 il capstone lo prova su una macchina riportata allo stato iniziale: se hai fatto tutto a
 mano, non passa.
-
-E quando sbagli non ti diciamo «no»: ti diamo **un comando per guardare il problema**.
-Dopo dieci esercizi hai interiorizzato il riflesso che è il mestiere: prima guardo, poi cambio.
 
 ## Il programma
 
