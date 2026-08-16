@@ -115,6 +115,11 @@ export default {
                      <code>uname -r | lab answer</code>. <em>This is not a textbook question: it is
                      <strong>this</strong> machine, and the answer is written nowhere.</em>`,
             },
+            attrezzi: [
+                { cmd: "|", cap: 8, cosa: {
+                    it: "la barra verticale prende quello che un comando ha stampato e lo passa al comando dopo, invece di mostrartelo a schermo. Qui serve per consegnare la risposta senza ricopiarla a mano.",
+                    en: "the vertical bar takes what a command printed and passes it on to the next command instead of showing it to you. Here it hands the answer in without you retyping it." } },
+            ],
             checks: [
                 { id: "kernel",
                   why: { it: "La versione del kernel è la prima cosa che si guarda quando un driver non va o un pacchetto non si installa.",
@@ -133,13 +138,20 @@ export default {
             brief: {
                 it: `Nella tua cartella crea un file <code>saluto.txt</code> che contenga
                      <strong>esattamente</strong> <code>ciao mondo</code>, <strong>senza a-capo
-                     finale</strong>. Un comando, un'opzione, due argomenti. La verifica guarda i
-                     byte: l'a-capo di troppo si vede.`,
+                     finale</strong>. Un comando, un'opzione, due argomenti — e il segno
+                     <code>&gt;</code> per mandare il risultato in un file invece che a schermo.
+                     La verifica guarda i byte: l'a-capo di troppo si vede.`,
                 en: `In your folder create a file <code>saluto.txt</code> containing
                      <strong>exactly</strong> <code>ciao mondo</code>, <strong>with no trailing
-                     newline</strong>. One command, one option, two arguments. The check looks at
-                     the bytes: one extra newline shows up.`,
+                     newline</strong>. One command, one option, two arguments — plus the
+                     <code>&gt;</code> sign to send the result into a file instead of to the screen.
+                     The check looks at the bytes: one extra newline shows up.`,
             },
+            attrezzi: [
+                { cmd: "> file", cap: 8, cosa: {
+                    it: "manda l'uscita di un comando <strong>dentro un file</strong> invece che a schermo. Se il file non c'è lo crea, se c'è lo sovrascrive senza chiedere. È il modo normale di creare un file di testo dal terminale.",
+                    en: "sends a command's output <strong>into a file</strong> instead of to the screen. If the file does not exist it is created; if it does, it is overwritten without asking. This is the ordinary way to create a text file from the terminal." } },
+            ],
             checks: [
                 { id: "esiste",
                   why: { it: "Il segno <code>&gt;</code> non stampa a schermo: manda l'uscita del comando dentro un file. È la prima volta che lo usi, e lo userai per sempre.",
@@ -172,6 +184,11 @@ export default {
                      (with the right letter). <em>This exercise teaches you not to need the
                      course.</em>`,
             },
+            attrezzi: [
+                { cmd: "cut", cap: 10, cosa: {
+                    it: "<strong>non devi conoscerlo</strong>: scoprirlo è l'esercizio. Serve a ritagliare colonne da una riga di testo, e lo userai davvero più avanti — qui conta solo la strada per arrivarci, cioè il manuale.",
+                    en: "<strong>you are not supposed to know it</strong>: finding out is the exercise. It cuts columns out of a line of text, and you will really use it later — here what counts is only the road to the answer, which is the manual." } },
+            ],
             checks: [
                 { id: "opzione",
                   why: { it: "Ogni comando porta con sé il proprio manuale. Chi sa leggerlo non ha bisogno di ricordare nulla — e questo, in venticinque anni, non cambia mai.",

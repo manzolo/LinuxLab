@@ -177,6 +177,17 @@ export default {
                      <code>~/lab/mnt</code> and leave a file <code>prova.txt</code> inside
                      containing <code>funziona</code>. It must end up mounted.`,
             },
+            attrezzi: [
+                { cmd: "truncate -s 8M file", cosa: {
+                    it: "crea (o ridimensiona) un file di esattamente quella dimensione, in un istante e senza scrivere davvero i byte.",
+                    en: "creates (or resizes) a file of exactly that size, instantly and without really writing the bytes." } },
+                { cmd: "dd if=… of=… bs=1M count=8", cosa: {
+                    it: "copia a blocchi da una sorgente a una destinazione: qui prende 8 blocchi da 1 MB di zeri e li scrive nel file. È la strada lunga, ma è quella che troverai scritta ovunque.",
+                    en: "copies block by block from a source to a destination: here it takes 8 blocks of 1 MB of zeros and writes them into the file. It is the long road, but the one you will find written everywhere." } },
+                { cmd: "modprobe loop", cosa: {
+                    it: "chiede al kernel di caricare un modulo — qui quello che fa funzionare i dischi finti dentro un file. Sui sistemi veri di solito succede da sé.",
+                    en: "asks the kernel to load a module — here the one that makes file-backed fake disks work. On real systems it usually happens by itself." } },
+            ],
             checks: [
                 { id: "immagine-formattata",
                   why: { it: "Un file da 8 MB pieno di zeri non è un disco: lo diventa quando ci scrivi dentro le strutture di un filesystem. È quello che fa <code>mkfs</code>.",

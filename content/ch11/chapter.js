@@ -171,6 +171,11 @@ export default {
                      PID into <code>~/lab/pid.txt</code>. The check verifies that PID is really
                      alive and really is a <code>sleep</code>.`,
             },
+            attrezzi: [
+                { cmd: "sleep N", cosa: {
+                    it: "non fa niente per il numero di secondi che gli dici, poi finisce. È il programma più inutile che ci sia, ed è proprio per questo che è perfetto per esercitarsi sui processi: dura quanto serve e non combina guai.",
+                    en: "does nothing for the number of seconds you give it, then ends. It is the most useless program there is, which is exactly why it is perfect for practising on processes: it lasts as long as you need and causes no trouble." } },
+            ],
             checks: [
                 { id: "pid-vivo",
                   why: { it: "Mandare qualcosa in background e tenerne il PID è il gesto base di ogni script che avvia un servizio e poi deve saperlo fermare.",

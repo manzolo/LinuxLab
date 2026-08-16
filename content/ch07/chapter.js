@@ -5,7 +5,7 @@ export default {
         it: "L'identità è un numero, e sudo è un file di testo.",
         en: "Identity is a number, and sudo is a text file.",
     },
-    commands: ["id", "groups", "adduser", "getent", "su", "sudo", "sudo -l", "visudo"],
+    commands: ["id", "groups", "addgroup", "adduser", "getent", "su", "sudo", "sudo -l", "visudo"],
     glossary: ["UID", "GID", "nologin", "sudoers", "minimo privilegio"],
 
     blocks: [
@@ -46,6 +46,9 @@ export default {
             { cmd: "getent passwd www-data", out: "www-data:x:82:82:Linux User,,,:/var/www:/sbin/nologin",
               note: { it: "Sette campi separati da <code>:</code>. L'ultimo è la shell: <code>/sbin/nologin</code> significa <strong>questo utente esiste ma non può entrare</strong>. È normale, e voluto: serve a far girare un servizio senza dargli un accesso.",
                       en: "Seven colon-separated fields. The last is the shell: <code>/sbin/nologin</code> means <strong>this user exists but cannot log in</strong>. That is normal and deliberate: it runs a service without granting it a login." } },
+            { cmd: "addgroup web", out: "",
+              note: { it: "Il gruppo va creato <strong>prima</strong> dell'utente: <code>adduser -G web</code> fallisce se <code>web</code> non esiste ancora. Nessun messaggio significa che è andata bene — nel terminale il silenzio è una buona notizia.",
+                      en: "The group must exist <strong>before</strong> the user: <code>adduser -G web</code> fails if <code>web</code> is not there yet. No message means it worked — in a terminal, silence is good news." } },
             { cmd: "adduser -D -G web deploy", out: "",
               note: { it: "<code>-D</code> non chiede la password, <code>-G</code> mette nel gruppo. Su Debian e derivate lo stesso lavoro lo fa <code>useradd -m -G web deploy</code>.",
                       en: "<code>-D</code> asks no password, <code>-G</code> puts them in the group. On Debian and derivatives the same job is done by <code>useradd -m -G web deploy</code>." } },
@@ -102,6 +105,7 @@ export default {
         { kind: "recap", table: [
             { cmd: "id", what: { it: "chi sono per il kernel", en: "who I am to the kernel" }, flag: { it: "<code>id nome</code> per chiedere di un altro", en: "<code>id name</code> to ask about someone else" } },
             { cmd: "getent passwd", what: { it: "l'anagrafica degli utenti", en: "the user directory" }, flag: { it: "meglio di <code>cat /etc/passwd</code>: vede anche LDAP", en: "better than <code>cat /etc/passwd</code>: it also sees LDAP" } },
+            { cmd: "addgroup", what: { it: "crea un gruppo", en: "create a group" }, flag: { it: "va fatto <strong>prima</strong> dell'utente che ci va dentro", en: "must come <strong>before</strong> the user who joins it" } },
             { cmd: "adduser", what: { it: "crea un utente", en: "create a user" }, flag: { it: "<code>-D</code> senza password, <code>-G</code> gruppo", en: "<code>-D</code> no password, <code>-G</code> group" } },
             { cmd: "sudo -l", what: { it: "cosa posso fare davvero", en: "what can I actually do" }, flag: { it: "<code>-U utente</code> per chiederlo di un altro", en: "<code>-U user</code> to ask about someone else" } },
             { cmd: "visudo", what: { it: "modifica sudoers in sicurezza", en: "edit sudoers safely" }, flag: { it: "<code>-c</code> controlla soltanto, <code>-f file</code> per sudoers.d", en: "<code>-c</code> check only, <code>-f file</code> for sudoers.d" } },

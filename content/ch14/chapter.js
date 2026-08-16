@@ -171,6 +171,11 @@ export default {
                      <code>~/lab/dati</code>, and <strong>write a line to the system log</strong>
                      with <code>logger</code>. Then run it by hand once.`,
             },
+            attrezzi: [
+                { cmd: "tar czf archivio.tar.gz -C cartella nome", cosa: {
+                    it: "impacchetta una cartella in un unico file e la comprime: <code>c</code> crea, <code>z</code> comprime, <code>f</code> dice qual è il file di destinazione. È il formato con cui viaggiano i backup da vent'anni.",
+                    en: "packs a folder into a single file and compresses it: <code>c</code> creates, <code>z</code> compresses, <code>f</code> names the destination file. It is the format backups have travelled in for twenty years." } },
+            ],
             checks: [
                 { id: "script-eseguibile",
                   why: { it: "Cron non ti dirà mai «manca il permesso di esecuzione»: semplicemente il job non partirà, in silenzio, ogni notte.",

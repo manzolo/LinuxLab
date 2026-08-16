@@ -31,6 +31,8 @@ export default {
     tipoStato: "state",
     tipoRisposta: "answer",
     tipoMetodo: "method",
+    attrezzi: "Tools on loan",
+    attrezziCap: "chapter {0}",
     aiuto: "Help",
     aiutoChiudi: "Close help",
     aiutoVerifica: "What the check will look at",

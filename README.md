@@ -37,6 +37,20 @@ poi cambio.
 Ogni esercizio ha un aiuto che dice cosa guarderà la verifica e quali comandi ti servono. I
 suggerimenti veri restano sotto, e si aprono uno alla volta.
 
+## E niente che non ti sia stato spiegato
+
+![Gli attrezzi in prestito](img/attrezzi.png)
+
+Un esercizio può usare un comando che il lab non ha ancora insegnato — a volte deve, perché il
+capitolo 1 senza il segno `>` non ti fa creare un file. Ma allora **lo dichiara**: cosa fa, in
+una frase, sotto la consegna, sempre aperto, senza dover spendere un suggerimento. Accanto c'è
+il capitolo dove lo studierai davvero, che serve a dire *«non ti sei perso una lezione»*.
+
+Non è una buona intenzione, è un test: `npm test` costruisce il vocabolario cumulativo del
+percorso — quello che i capitoli fino a lì dichiarano, mostrano e riepilogano — e lo confronta
+con i comandi che compaiono nelle consegne e nei suggerimenti. Se ne trova uno scoperto, la
+build fallisce e dice quale. Al primo giro ne ha trovati 23.
+
 ## Come funziona l'anti-trucco
 
 Nei fratelli della collana EDU-\* il motore è di carta, quindi la verifica può confrontare
@@ -171,6 +185,7 @@ Se l'immagine manca, il sito lo dice in chiaro invece di dare un errore di rete.
 
 ```bash
 npm test               # struttura dei contenuti: bilingue, id dei check, prerequisiti (secondi)
+npm run audit          # chi chiede un comando che il lab non ha ancora spiegato
 npm run test:labs      # avvia la VERA macchina ed esegue tutti gli esercizi del browser
 npm run test:labs-local # gli esercizi dei capitoli 17-22, nel container Debian
 npm run e2e            # smoke test su Chrome headless

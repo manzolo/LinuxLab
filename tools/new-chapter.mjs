@@ -36,6 +36,15 @@ const esercizi = Array.from({ length: nEs }, (_, i) => `        {
                      a ogni sessione se serve dirlo.\`,
                 en: \`TODO: the task.\`,
             },
+            // Serve solo se l'esercizio usa qualcosa che il lab non ha ancora
+            // insegnato. Si vede sotto la consegna, sempre aperto. Senza, il test
+            // "nessun esercizio chiede quello che il lab non ha ancora spiegato"
+            // fallisce e dice quale comando manca. Togli il blocco se non serve.
+            // attrezzi: [
+            //     { cmd: "> file", cap: 8, cosa: {
+            //         it: "TODO: cosa fa, in una frase.",
+            //         en: "TODO: what it does, in one sentence." } },
+            // ],
             checks: [
                 { id: "todo-id",   // DEVE combaciare con l'id emesso da check.sh
                   why: { it: "TODO: perché questo controllo esiste, in una frase che insegna.",

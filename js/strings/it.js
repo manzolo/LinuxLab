@@ -33,6 +33,8 @@ export default {
     tipoStato: "stato",
     tipoRisposta: "risposta",
     tipoMetodo: "metodo",
+    attrezzi: "Attrezzi in prestito",
+    attrezziCap: "capitolo {0}",
     aiuto: "Aiuto",
     aiutoChiudi: "Chiudi l'aiuto",
     aiutoVerifica: "Cosa guarderà la verifica",

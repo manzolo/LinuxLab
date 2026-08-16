@@ -159,6 +159,11 @@ export default {
                      <strong>exits with code 1</strong> (printing a message to stderr) if the
                      directory does not exist. On success it exits 0.`,
             },
+            attrezzi: [
+                { cmd: "dirname / basename", cosa: {
+                    it: "<code>dirname</code> di un percorso dà la cartella che lo contiene, <code>basename</code> dà solo l'ultimo pezzo. Servono a costruire il nome della destinazione a partire da quello dell'origine.",
+                    en: "<code>dirname</code> of a path gives the folder containing it, <code>basename</code> gives just the last piece. They build the destination name out of the source one." } },
+            ],
             checks: [
                 { id: "archivio-buono",
                   why: { it: "Un archivio che non si riapre è peggio di nessun archivio. Il check lo apre davvero, non guarda solo che il file esista.",

@@ -75,6 +75,22 @@ async function apri(query, profondita = "base") {
     await dormi(1200);
 }
 
+// Apre un esercizio diverso dal primo (che si apre da solo) e aspetta che il suo
+// mondo sia pronto: i pulsanti restano spenti finche' non lo e'.
+async function apriEsercizio(id) {
+    await val(`document.querySelector('.es[data-es="${id}"] .es-testa')?.click()`);
+    for (let i = 0; i < 40; i++) {
+        await dormi(500);
+        const pronti = await val(`(() => { const b = [...document.querySelectorAll('.es.aperto .es-barra button')];
+            return b.length > 0 && b.every(x => !x.disabled); })()`);
+        if (pronti) break;
+    }
+    // Il pannello degli esercizi scorre per conto suo: senza questo l'esercizio
+    // aperto finisce mezzo fuori dall'inquadratura.
+    await val(`document.querySelector('.es.aperto')?.scrollIntoView({block: 'start'})`);
+    await dormi(800);
+}
+
 async function scatta(nome) {
     const s = await cmd("Page.captureScreenshot", { format: "png" });
     mkdirSync(DEST, { recursive: true });
@@ -104,6 +120,12 @@ await val(`(() => { const b = [...document.querySelectorAll('.es.aperto .es-corp
     .find(x => /Aiuto|Help/.test(x.textContent)); if (b) b.click(); })()`);
 await dormi(900);
 await scatta("aiuto.png");
+
+// 4 — gli attrezzi in prestito: l'esercizio 1.2 usa `>`, che si studia al capitolo 8,
+//     e lo dice sotto la consegna invece di darlo per scontato.
+await apri("?lang=it&ch=1");
+await apriEsercizio("e2");
+await scatta("attrezzi.png");
 
 ws.close();
 console.log("fatto");

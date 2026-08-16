@@ -15,6 +15,7 @@
     "serve": "python3 -m http.server 8801",
     "image": "make -C lab all",
     "test": "node --test tests/content.test.js",
+    "audit": "node tools/prerequisiti.mjs",
     "test:labs": "node tests/labs.mjs",
     "test:labs-local": "node tests/labs-local.mjs",
     "transcripts": "node tools/gen-transcript.mjs",

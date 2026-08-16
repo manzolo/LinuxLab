@@ -112,6 +112,41 @@ for (const cap of capitoliCaricati.filter(c => !c.__errore)) {
     });
 }
 
+// La promessa che questo test difende: **nessun esercizio chiede una cosa che il
+// lab non ha ancora spiegato.** Puo' usarne una nuova — spesso deve — ma allora la
+// dichiara in `attrezzi`, e chi studia se la trova scritta sotto la consegna,
+// prima di provare e senza spendere un suggerimento.
+test("nessun esercizio chiede quello che il lab non ha ancora spiegato", async () => {
+    const { scoperti } = await import(path.join(ROOT, "tools/vocabolario.mjs"));
+    const buchi = scoperti(capitoliCaricati.filter(c => !c.__errore));
+    const righe = buchi.map(b =>
+        `${b.cap.id}.${b.es.id}: ${b.mancanti.map(m => `${m.tok} (${m.dove})`).join(", ")}`);
+    assert.deepEqual(righe, [],
+        "va aggiunto un `attrezzi: [{cmd, cap, cosa:{it,en}}]` all'esercizio, oppure il comando va insegnato nel capitolo");
+});
+
+test("nessun attrezzo dichiarato per cose gia' insegnate", async () => {
+    const { attrezziInutili } = await import(path.join(ROOT, "tools/vocabolario.mjs"));
+    const stantii = attrezziInutili(capitoliCaricati.filter(c => !c.__errore));
+    assert.deepEqual(stantii.map(s => `${s.cap.id}.${s.es.id}: ${s.tok}`), [],
+        "l'attrezzo è già a disposizione a questo punto del percorso: la dichiarazione va tolta");
+});
+
+test("gli attrezzi rimandano a un capitolo che esiste e viene dopo", () => {
+    for (const cap of capitoliCaricati.filter(c => !c.__errore)) {
+        for (const es of cap.exercises || []) {
+            for (const a of es.attrezzi || []) {
+                assert.ok(a.cmd && a.cosa, `${cap.id}.${es.id}: un attrezzo senza "cmd" o "cosa"`);
+                if (a.cap == null) continue;
+                assert.ok(CAPITOLI.some(c => c.num === a.cap),
+                    `${cap.id}.${es.id}: l'attrezzo ${a.cmd} rimanda al capitolo ${a.cap}, che non esiste`);
+                assert.ok(a.cap > cap.num,
+                    `${cap.id}.${es.id}: l'attrezzo ${a.cmd} rimanda al capitolo ${a.cap}, che non viene dopo questo`);
+            }
+        }
+    }
+});
+
 test("i trascritti dichiarati sono stati generati", () => {
     for (const cap of capitoliCaricati.filter(c => !c.__errore)) {
         for (const b of cap.blocks.filter(b => b.kind === "transcript" && b.src)) {

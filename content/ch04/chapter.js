@@ -102,6 +102,11 @@ export default {
                 it: `Quante righe ha <code>~/lab/app.log</code>? Consegna il numero.`,
                 en: `How many lines does <code>~/lab/app.log</code> have? Hand in the number.`,
             },
+            attrezzi: [
+                { cmd: "< file", cap: 8, cosa: {
+                    it: "il segno minore prende il contenuto di un file e lo dà in pasto al comando come se lo avessi digitato tu. È il gemello di <code>&gt;</code>, nella direzione opposta.",
+                    en: "the less-than sign takes a file's content and feeds it to the command as if you had typed it. It is the twin of <code>&gt;</code>, pointing the other way." } },
+            ],
             checks: [
                 { id: "righe",
                   why: { it: "È la domanda che precede ogni altra: se il file ha 12 righe lo leggi, se ne ha due milioni devi filtrarlo.",
@@ -124,6 +129,11 @@ export default {
                      Hand it in in full. <em>There are at least two roads, and they count the
                      same.</em>`,
             },
+            attrezzi: [
+                { cmd: "sed -n 500p", cap: 10, cosa: {
+                    it: "<code>sed</code> è il coltellino per trasformare il testo riga per riga; <code>-n 500p</code> vuol dire «non stampare niente, tranne la riga 500». È solo la seconda strada: la prima usa comandi che conosci già.",
+                    en: "<code>sed</code> is the pocket knife for transforming text line by line; <code>-n 500p</code> means \"print nothing, except line 500\". It is only the second road: the first uses commands you already know." } },
+            ],
             checks: [
                 { id: "riga-500",
                   why: { it: "Due comandi banali in fila fanno una cosa che nessuno dei due sa fare da solo. È il principio su cui è costruita tutta la shell.",

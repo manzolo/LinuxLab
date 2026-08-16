@@ -139,6 +139,11 @@ export default {
                      line, most frequent first, <strong>address only</strong> (no counts).
                      <em>You cannot type them by hand: you have never seen them.</em>`,
             },
+            attrezzi: [
+                { cmd: "awk '{print $4}'", cap: 10, cosa: {
+                    it: "stampa la colonna numero 4 di ogni riga. Fa lo stesso di <code>cut -d' ' -f4</code>, ma non si fa ingannare da due spazi di fila: qui le due strade valgono uguale.",
+                    en: "prints column number 4 of every line. It does the same as <code>cut -d' ' -f4</code>, but is not fooled by two spaces in a row: here the two roads are worth the same." } },
+            ],
             checks: [
                 { id: "top5",
                   why: { it: "È la catena che userai per il resto della tua vita da amministratore: estrai una colonna, ordina, conta, riordina, tronca. Cambia solo la colonna.",

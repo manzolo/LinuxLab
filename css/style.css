@@ -257,6 +257,25 @@ body.pro .probox { display: block; }
 .sonda td { padding: 3px 11px; border-top: 1px solid #262d36; }
 .sonda td:first-child { color: var(--ink-faint); width: 30%; }
 
+/* Attrezzi in prestito: sempre aperti, sotto la consegna. Sono la promessa che
+   non ti si chiede niente che non ti sia stato spiegato. */
+.attrezzi {
+    margin: 0 0 14px; padding: 9px 12px;
+    background: #1a2029; border-left: 2px solid var(--phosphor);
+    border-radius: 0 var(--r) var(--r) 0;
+    font-size: 13px;
+}
+.attrezzi h4 {
+    margin: 0 0 5px; font-size: 11px; letter-spacing: .07em; font-weight: 600;
+    text-transform: uppercase; color: var(--ink-faint);
+}
+.attrezzi ul { margin: 0; padding-left: 17px; }
+.attrezzi li { margin: 4px 0; color: var(--ink-soft); line-height: 1.55; }
+.attrezzi code { color: var(--phosphor); }
+.attrezzo-dove { margin-left: 6px; color: var(--ink-faint); font-size: 11.5px; white-space: nowrap; }
+.attrezzo-dove::before { content: "("; }
+.attrezzo-dove::after { content: ")"; }
+
 /* Il pannello di aiuto: il quadro dell'esercizio, da leggere PRIMA di provare. */
 .aiuto-pannello {
     margin: 10px 0 12px; padding: 12px 14px;

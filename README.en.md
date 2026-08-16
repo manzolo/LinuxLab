@@ -37,6 +37,20 @@ first, change second.
 Every exercise has a help panel telling you what the check will look at and which commands you
 need. The real hints stay below, and open one at a time.
 
+## And nothing you were never told about
+
+![Tools on loan](img/attrezzi.png)
+
+An exercise may use a command the lab has not taught yet — sometimes it must, because chapter 1
+without the `>` sign cannot have you create a file. But then it **declares it**: what it does,
+in one sentence, under the task, always open, without spending a hint. Next to it is the
+chapter where you will really study it, which is there to say *"you did not miss a lesson"*.
+
+This is not a good intention, it is a test: `npm test` builds the course's cumulative
+vocabulary — what the chapters up to that point declare, show and recap — and compares it with
+the commands appearing in the tasks and hints. If it finds an uncovered one, the build fails
+and names it. On the first run it found 23.
+
 ## How the anti-cheat works
 
 In this lab's sibling projects the engine is made of paper, so checking can compare outputs.
@@ -168,6 +182,7 @@ If the image is missing, the site says so plainly instead of throwing a network 
 
 ```bash
 npm test               # content structure: bilingual, check ids, prerequisites (seconds)
+npm run audit          # who asks for a command the lab has not explained yet
 npm run test:labs      # boots the REAL machine and runs every browser exercise
 npm run test:labs-local # chapters 17-22, in the Debian container
 npm run e2e            # smoke test on headless Chrome

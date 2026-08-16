@@ -149,6 +149,11 @@ export default {
                      <strong>files 644</strong>, <strong>directories 755</strong>, everything owned
                      by <code>web:web</code>.`,
             },
+            attrezzi: [
+                { cmd: "find … -type f -exec … {} +", cap: 9, cosa: {
+                    it: "<code>find</code> cerca per proprietà — <code>-type f</code> dà i soli file, <code>-type d</code> le sole cartelle — e <code>-exec … {} +</code> esegue un comando su quello che ha trovato. È il modo di trattare file e cartelle in modo diverso, che <code>chmod -R</code> da solo non sa fare.",
+                    en: "<code>find</code> searches by property — <code>-type f</code> gives files only, <code>-type d</code> directories only — and <code>-exec … {} +</code> runs a command on what it found. It is how you treat files and folders differently, which <code>chmod -R</code> alone cannot do." } },
+            ],
             checks: [
                 { id: "proprietario",
                   why: { it: "Un file che il server web deve leggere ma non modificare non deve appartenergli. Sbagliare qui è il modo più comune di trasformare un bug in una compromissione.",

@@ -173,6 +173,11 @@ export default {
                      <code>ultimo</code> pointing at the most recently modified <code>.log</code>
                      file. <strong>A link, not a copy</strong>: the check tests that too.`,
             },
+            attrezzi: [
+                { cmd: "$(comando)", cap: 16, cosa: {
+                    it: "le parentesi con il dollaro davanti eseguono un comando e <strong>mettono al suo posto quello che ha stampato</strong>. Servono quando un comando ha bisogno del risultato di un altro come argomento.",
+                    en: "the parentheses with a dollar in front run a command and <strong>put whatever it printed in their place</strong>. You need them when one command takes another's result as an argument." } },
+            ],
             checks: [
                 { id: "e-un-link",
                   why: { it: "Una copia si sgancia dall'originale nell'istante in cui la fai. Un link resta agganciato: è la differenza fra una fotografia e una finestra.",

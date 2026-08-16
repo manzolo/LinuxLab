@@ -77,6 +77,8 @@ async function apri(cap, es, box) {
     const corpo = box.querySelector(".es-corpo");
     corpo.replaceChildren();
     corpo.append(el("p", "es-brief", tr(es.brief)));
+    const attrezzi = costruisciAttrezzi(es);
+    if (attrezzi) corpo.append(attrezzi);
 
     // Nei capitoli locali non c'e' una macchina da interrogare: l'esercizio si fa
     // nel container, e la verifica la esegue `lab check`. Il pannello lo dice invece
@@ -245,6 +247,34 @@ function disegnaVerdetto(cap, es, v, box) {
     return fuori;
 }
 
+
+/**
+ * Gli attrezzi in prestito: i comandi che l'esercizio usa e che il lab non ha
+ * ancora insegnato. Stanno SOTTO LA CONSEGNA e sempre aperti — non dietro un
+ * bottone, non dentro i suggerimenti (che si pagano uno alla volta).
+ *
+ * La regola che difendono: un esercizio puo' chiedere una cosa nuova, ma allora
+ * deve dirti cos'e'. Il capitolo dove la studierai davvero e' indicato accanto,
+ * cosi' si capisce che non ti sei perso una lezione.
+ * (Segnalato da Andrea il 2026-08-16 sull'esercizio 1.2: chiedeva di scrivere un
+ * file con `>` senza che `>` comparisse in nessun punto del capitolo.)
+ * Il test `npm test` non lascia passare un esercizio che salta la dichiarazione.
+ */
+function costruisciAttrezzi(es) {
+    if (!es.attrezzi?.length) return null;
+    const box = el("div", "attrezzi");
+    box.append(el("h4", null, t("attrezzi")));
+    const ul = el("ul");
+    for (const a of es.attrezzi) {
+        const li = el("li");
+        li.append(el("code", null, escapa(a.cmd)));
+        li.insertAdjacentHTML("beforeend", " — " + tr(a.cosa));
+        if (a.cap) li.append(el("span", "attrezzo-dove", t("attrezziCap", a.cap)));
+        ul.append(li);
+    }
+    box.append(ul);
+    return box;
+}
 
 /**
  * L'aiuto dell'esercizio. Non e' un quarto suggerimento: e' il QUADRO, e si legge

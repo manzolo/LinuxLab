@@ -56,6 +56,26 @@ fratelli della collana: gli eventi del motore sono codici, la UI li traduce a re
 Il test lo verifica in entrambe le direzioni: un check dichiarato e non emesso, o emesso e
 non spiegato, fa fallire la build.
 
+**Non si chiede quello che non si è spiegato.** Un esercizio può usare un comando nuovo —
+spesso deve — ma allora lo **dichiara**, e chi studia se lo trova scritto sotto la consegna,
+sempre aperto, prima di provare e senza spendere un suggerimento:
+
+```js
+attrezzi: [
+    { cmd: "> file", cap: 8, cosa: { it: "manda l'uscita di un comando dentro un file…", en: "…" } },
+],
+```
+
+`cap` è il capitolo dove lo si studia davvero, e serve a dire *«non ti sei perso una lezione»*.
+Il controllo è meccanico: `tools/vocabolario.mjs` costruisce il vocabolario cumulativo
+(quello che i capitoli ≤ N dichiarano, mostrano, riepilogano — più gli attrezzi già prestati)
+e lo confronta con i comandi che compaiono nella consegna e nei suggerimenti. Un buco fa
+fallire `npm test`; `npm run audit` stampa il referto per intero. Vale anche il contrario: un
+attrezzo dichiarato per una cosa già insegnata è rumore, e fa fallire il test allo stesso modo.
+Quando il comando è **materia di questo capitolo** la risposta giusta non è dichiararlo ma
+insegnarlo: riga nel blocco `shown`, riga nel `recap`, voce in `commands` (è stato il caso di
+`addgroup` nel capitolo 7).
+
 **Asserire l'invariante, mai la forma del comando.** `chmod 644` e `chmod u=rw,go=r` sono lo
 stesso fatto: il check guarda i bit. Il cron delle 3:30 si verifica sui campi minuto/ora, non
 sulla stringa. La regola pratica: *se un `check.sh` contiene un `grep` sul comando
@@ -86,7 +106,8 @@ un capitolo a metà senza rompere niente.**
 
 | comando | cosa fa | quanto dura |
 |---|---|---|
-| `npm test` | struttura, bilinguismo, id dei check, prerequisiti | secondi |
+| `npm test` | struttura, bilinguismo, id dei check, prerequisiti, attrezzi dichiarati | secondi |
+| `npm run audit` | il referto per esteso: chi chiede cosa senza averlo spiegato | istantaneo |
 | `npm run test:labs` | avvia la VERA macchina, esegue ogni esercizio del browser | ~6 min |
 | `npm run test:labs-local` | i capitoli 17-22 nel container Debian+systemd | ~2 min |
 | `npm run e2e` | smoke test su Chrome headless (serve `npm run serve` attivo) | ~1 min |
