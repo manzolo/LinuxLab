@@ -26,8 +26,9 @@ lab_fact syn "${syn:-(nessun SYN verso la porta 80)}"
 if [ -n "$syn" ]; then lab_check cattura-con-syn 0
 else lab_check cattura-con-syn 1 "(nessun SYN verso la 80)" "una riga  … > ….80: Flags [S]" "$f"; fi
 
-# La porta effimera del client, presa dalla riga del SYN: e' l'unico numero che
-# chi bara non puo' indovinare, perche' lo sceglie il kernel al momento.
+# La porta effimera del client, presa dalla riga del SYN. Non e' un segreto: e'
+# scritta nel file stesso. Serve a pretendere COERENZA fra le due righe, non a
+# rendere impossibile il falso.
 # L'indirizzo puo' essere IPv4 o IPv6: su una macchina dove `localhost` risolve
 # prima ::1, tcpdump scrive `IP6 ::1.55676 > ::1.80`. Quindi non si presume la
 # forma dell'indirizzo — si prende il token subito prima di " > " e se ne stacca

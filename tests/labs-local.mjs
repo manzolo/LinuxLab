@@ -15,6 +15,7 @@ import url from "node:url";
 const ROOT = path.join(path.dirname(url.fileURLToPath(import.meta.url)), "..");
 const NOME = "linuxlab-test";
 const IMG = "linuxlab-local";
+const LIB = path.join(ROOT, "lab/overlay/opt/lab/lib/proprieta.sh");
 const SEMI = [424242, 7];
 
 const sh = (cmd, opts = {}) => execSync(cmd, { encoding: "utf8", stdio: "pipe", ...opts });
@@ -105,24 +106,43 @@ function provaEsercizio(cap, es) {
 // capitolo 21 lasciava un volume montato sull'host. (Secondo giro, stesso giorno.)
 function pulisciTutto(silenzioso = false) {
     if (!silenzioso) console.log("\npulizia");
+    // Anche qui la prova di proprieta' viene PRIMA: `lab_disfa_vg` e `lab_disfa_md`
+    // non toccano niente che non sappiano dimostrare nostro. Le funzioni stanno
+    // nell'immagine (/opt/lab/lib/proprieta.sh), una sola copia per tutti.
+    // Il file delle prove ce lo mettiamo noi: un container creato da un'immagine
+    // vecchia non ce l'ha, e distruggerlo senza aver smontato butterebbe via gli
+    // unici strumenti capaci di farlo. (Terzo giro di revisione, 2026-08-16.)
+    let disfatto = false;
     try {
-        sh(`docker exec ${NOME} sh -c '
-            umount /mnt/lab 2>/dev/null || umount -l /mnt/lab 2>/dev/null
-            command -v vgchange >/dev/null && { vgchange -an lab-vg; vgremove -f lab-vg; } 2>/dev/null
-            [ -e /dev/md/lab-raid ] && mdadm --stop /dev/md/lab-raid
-            true'`);
-    } catch {}
-    try { sh(`docker rm -f ${NOME}`); } catch {}
-    try { sh(`test -e /dev/md/lab-raid && sudo -n mdadm --stop $(readlink -f /dev/md/lab-raid)`); } catch {}
-    try {
-        const appesi = execSync("losetup -a 2>/dev/null | grep '/lab-' | grep -o '^/dev/loop[0-9]*' || true",
-            { encoding: "utf8" }).trim().split("\n").filter(Boolean);
-        for (const l of appesi) { try { sh(`sudo -n losetup -d ${l}`); } catch {} }
-        const restano = execSync("losetup -a 2>/dev/null | grep -c '/lab-' || true", { encoding: "utf8" }).trim();
-        if (silenzioso) return;
-        if (restano !== "0") console.log(`  ⚠ restano ${restano} loop device del laboratorio: ./lab/local/run.sh cleanup`);
-        else console.log("  niente di nostro è rimasto sull'host");
-    } catch {}
+        sh(`docker exec ${NOME} mkdir -p /opt/lab/lib`);
+        sh(`docker cp ${LIB} ${NOME}:/opt/lab/lib/proprieta.sh`);
+        // I due passi concatenati con `||`: il secondo che riesce non deve
+        // nascondere il primo che ha fallito. `sh` lancia se l'uscita non e' zero,
+        // quindi `disfatto` resta false e il container NON viene rimosso.
+        const r = sh(`docker exec ${NOME} sh -c '
+            . /opt/lab/lib/proprieta.sh
+            lab_disfa_vg lab-vg || exit 1
+            lab_disfa_md /dev/md/lab-raid || exit 1' 2>&1`);
+        if (r.trim()) console.log("  " + r.trim().replace(/\n/g, "\n  "));
+        disfatto = true;
+    } catch { /* il container puo' non esserci: lo diciamo sotto */ }
+    if (disfatto) { try { sh(`docker rm -f ${NOME}`); } catch {} }
+    else {
+        try { sh(`docker inspect ${NOME}`); console.log(`  ⚠ non ho potuto disfare da dentro: NON rimuovo ${NOME}`); }
+        catch { /* non esiste: niente da rimuovere */ }
+    }
+    // Sull'host: stessa prova, stesso file. Non un `grep /lab-` scritto qui.
+    const nostri = () => {
+        try {
+            return execSync(`sh -c '. ${LIB}; LAB_SUDO=sudo; lab_loop_nostri'`, { encoding: "utf8" })
+                .trim().split("\n").filter(Boolean);
+        } catch { return []; }
+    };
+    for (const l of nostri()) { try { sh(`sudo -n losetup -d ${l}`); } catch {} }
+    if (silenzioso) return;
+    const restano = nostri();
+    if (restano.length) console.log(`  ⚠ restano ${restano.length} loop device del laboratorio: ./lab/local/run.sh cleanup`);
+    else console.log("  niente di nostro è rimasto sull'host");
 }
 
 const richiesti = process.argv.slice(2);

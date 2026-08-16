@@ -22,6 +22,7 @@
     "e2e": "node tools/e2e.mjs http://127.0.0.1:8801/",
     "new-chapter": "node tools/new-chapter.mjs",
     "test:regressione": "node tests/regressione-cwd.mjs",
+    "test:semina": "node tests/regressione-semina.mjs http://127.0.0.1:8801/",
     "e2e:pulsanti": "node tools/e2e-pulsanti.mjs http://127.0.0.1:8801/",
     "screenshot": "node tools/screenshot.mjs"
   }

@@ -16,6 +16,13 @@ IMG=linuxlab-local
 CAP="${1:-}"
 ES="${2:-}"
 
+# Le prove di proprieta' stanno in UN SOLO posto, lo stesso file che finisce
+# nell'immagine: cosi' host e container non possono divergere.
+LAB_SUDO=sudo
+LIB_PROPRIETA="$(dirname "$0")/../overlay/opt/lab/lib/proprieta.sh"
+# shellcheck source=../overlay/opt/lab/lib/proprieta.sh
+. "$LIB_PROPRIETA"
+
 rosso()  { printf '\033[31m%s\033[0m\n' "$*"; }
 giallo() { printf '\033[33m%s\033[0m\n' "$*"; }
 verde()  { printf '\033[32m%s\033[0m\n' "$*"; }
@@ -87,37 +94,45 @@ pulisci() {
     # 1. Prima si smonta e si disfa DA DENTRO, finche' il container c'e': gli
     #    strumenti (lvm, mdadm) sono li', non necessariamente sull'host.
     if docker ps -a --format '{{.Names}}' | grep -qx "$NOME"; then
-        docker exec "$NOME" sh -c '
-            umount /mnt/lab 2>/dev/null || umount -l /mnt/lab 2>/dev/null
-            command -v vgchange >/dev/null && { vgchange -an lab-vg; vgremove -f lab-vg; } 2>/dev/null
-            [ -e /dev/md/lab-raid ] && mdadm --stop /dev/md/lab-raid
-            true
-        ' >/dev/null 2>&1 || true
-        docker rm -f "$NOME" >/dev/null 2>&1 || true
+        # Anche QUI DENTRO la prova viene prima: `lab_disfa_vg` non tocca niente
+        # se non riesce a dimostrare che il gruppo poggia sui nostri dischi.
+        #
+        # E il file delle prove ce lo METTIAMO NOI, invece di sperare che il
+        # container sia stato creato da un'immagine abbastanza recente da averlo:
+        # un container vecchio non ce l'ha, il `. file || exit 0` usciva zitto e
+        # subito dopo `docker rm -f` buttava via gli unici strumenti capaci di
+        # smontare quel volume. (Terzo giro di revisione, 2026-08-16.)
+        # Il container si elimina SOLO se la pulizia interna e' riuscita davvero.
+        # Prima l'uscita del `docker exec` finiva in una pipe con `|| true`, quindi
+        # il suo esito si perdeva e `docker rm -f` partiva comunque: bastava che
+        # `umount` fallisse per buttare via gli strumenti con il volume ancora su.
+        # E dentro lo script i due passi vanno concatenati con `||`, o il secondo
+        # che riesce nasconde il primo che ha fallito.
+        # (Quarto giro di revisione, 2026-08-16.)
+        pulito=no
+        if docker exec "$NOME" mkdir -p /opt/lab/lib >/dev/null 2>&1 &&
+           docker cp "$LIB_PROPRIETA" "$NOME:/opt/lab/lib/proprieta.sh" >/dev/null 2>&1; then
+            if esito=$(docker exec "$NOME" sh -c '
+                . /opt/lab/lib/proprieta.sh
+                lab_disfa_vg lab-vg || exit 1
+                lab_disfa_md /dev/md/lab-raid || exit 1
+            ' 2>&1); then pulito=si; fi
+            [ -n "$esito" ] && printf '%s\n' "$esito"
+        else
+            rosso "non riesco a copiare le prove di proprietà dentro il container '$NOME'."
+        fi
+        if [ "$pulito" = si ]; then
+            docker rm -f "$NOME" >/dev/null 2>&1 || true
+        else
+            rosso "la pulizia dentro '$NOME' NON è riuscita: non lo elimino."
+            rosso "   dentro ci sono gli unici strumenti per smontare quel volume."
+            rosso "   entra e guarda:  docker exec -it $NOME bash"
+        fi
     fi
 
-    # 2. Poi, sull'host, solo quello che porta il nostro nome. `vgchange` puo' non
-    #    esserci: se manca, lo si dice invece di far finta di aver pulito.
+    # 2. Poi, sull'host: stessa funzione, stessa prova, stesso ordine.
     if command -v vgs >/dev/null 2>&1; then
-        if sudo vgs lab-vg >/dev/null 2>&1; then
-            # Il nome non basta: si guarda su quali dischi fisici poggia. Devono
-            # essere loop device agganciati ai NOSTRI file. Se anche uno solo non
-            # lo e', quel gruppo non l'abbiamo fatto noi e non lo tocchiamo.
-            nostro=si
-            for pv in $(sudo pvs --noheadings -o pv_name -S vg_name=lab-vg 2>/dev/null); do
-                case "$pv" in
-                    /dev/loop*) losetup "$pv" 2>/dev/null | grep -q '/lab-disco-' || nostro=no ;;
-                    *) nostro=no ;;
-                esac
-            done
-            if [ "$nostro" = si ]; then
-                sudo vgchange -an lab-vg 2>/dev/null || true
-                sudo vgremove -f lab-vg 2>/dev/null || true
-            else
-                rosso "c'e' un gruppo di volumi 'lab-vg' che NON poggia sui dischi del laboratorio."
-                rosso "   non lo tocco: guardalo con  sudo pvs -S vg_name=lab-vg"
-            fi
-        fi
+        lab_disfa_vg lab-vg || true
     elif sudo test -e /dev/lab-vg; then
         rosso "resta un gruppo di volumi 'lab-vg' e su questo host non c'è LVM per toglierlo."
         rosso "   installa lvm2 e ridai  $0 cleanup"
@@ -127,26 +142,17 @@ pulisci() {
     #    kernel come si chiamano davvero. Niente glob su /dev/md*.
     for md in /dev/md/lab-*; do
         [ -e "$md" ] || continue
-        reale=$(readlink -f "$md")
-        nome=$(sudo mdadm --detail "$reale" 2>/dev/null | sed -n 's/.*Name : .*:\([^ ]*\).*/\1/p')
-        case "$nome" in
-            lab-*) sudo mdadm --stop "$reale" 2>/dev/null || true ;;
-            *)     giallo "salto $md: si chiama '$nome', non è roba del laboratorio" ;;
-        esac
+        lab_disfa_md "$md" || giallo "salto $md: non ho potuto dimostrare che sia nostro"
     done
 
     # 4. I loop device: si guarda il file che c'e' dietro, non il numero.
-    for l in $(losetup -a 2>/dev/null | grep -o '^/dev/loop[0-9]*' || true); do
-        if losetup "$l" 2>/dev/null | grep -q '/lab-'; then sudo losetup -d "$l" 2>/dev/null || true; fi
-    done
+    for l in $(lab_loop_nostri); do sudo losetup -d "$l" 2>/dev/null || true; done
 
     # 5. Si dice com'e' finita, invece di dire "fatto" e basta.
     residui=""
     command -v vgs >/dev/null 2>&1 && sudo vgs lab-vg >/dev/null 2>&1 && residui="$residui lab-vg"
     for md in /dev/md/lab-*; do [ -e "$md" ] && residui="$residui $md"; done
-    for l in $(losetup -a 2>/dev/null | grep -o '^/dev/loop[0-9]*' || true); do
-        losetup "$l" 2>/dev/null | grep -q '/lab-' && residui="$residui $l"
-    done
+    for l in $(lab_loop_nostri); do residui="$residui $l"; done
     if [ -n "$residui" ]; then rosso "restano appesi:$residui"; else verde "fatto: niente di nostro è rimasto"; fi
 }
 

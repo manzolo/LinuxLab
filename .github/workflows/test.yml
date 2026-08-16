@@ -29,6 +29,12 @@ jobs:
       # Regressione: cambiando esercizio la shell dell'utente non deve restare
       # orfana in una cartella cancellata.
       - run: npm run test:regressione
+      # Regressione: due esercizi aperti in fretta non devono lasciare nella
+      # macchina il mondo di quello sbagliato. Serve un browser vero, quindi
+      # serve il sito servito.
+      - run: npm run serve & sleep 3
+      - run: npm run test:semina
+      - run: npm run e2e:pulsanti
 
   # I capitoli 17-22, nel container Debian con systemd.
   esercizi-locali:

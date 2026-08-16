@@ -105,7 +105,14 @@ while IFS= read -r line; do
             # valori memorizzati dal seed, tutto. Resta solo il seme, che scriviamo ora.
             find "$STATE" -maxdepth 1 -type f ! -name current -delete 2>/dev/null
             printf '%s' "$2" > "$STATE/seed"
-            out=$(run_lab "/opt/lab/$1/seed.sh"); reply "$id" $? "$out"
+            out=$(run_lab "/opt/lab/$1/seed.sh"); rc=$?
+            # Chi e' stato seminato per ultimo, e SOLO SE il seed e' riuscito: serve
+            # a dimostrare dall'esterno che due semine ravvicinate finiscono
+            # nell'ordine giusto (lo legge tests/regressione-semina.mjs), e un
+            # marcatore scritto prima direbbe "mondo pronto" anche di un seed
+            # fallito. (Terzo giro di revisione, 2026-08-16.)
+            [ "$rc" -eq 0 ] && printf '%s' "$1" > "$STATE/current"
+            reply "$id" "$rc" "$out"
             ;;
         # check <dir> : verifica
         check)
