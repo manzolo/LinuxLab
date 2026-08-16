@@ -56,6 +56,12 @@ export default {
             { cmd: "kill -9 412 && ps -p 412", out: "  PID TTY   TIME CMD",
               note: { it: "<code>-9</code> non lo esegue il processo: lo esegue il kernel. Per questo non si può ignorare — e per questo il programma non ha salvato niente.",
                       en: "<code>-9</code> is not executed by the process: it is executed by the kernel. That is why it cannot be ignored — and why the program saved nothing." } },
+            { cmd: "pkill -f tritatutto", out: "",
+              note: { it: "<code>kill</code> vuole un numero, <code>pkill</code> vuole un nome. <code>-f</code> confronta <strong>l'intera riga di comando</strong>, non solo il nome del programma: comodo, e pericoloso. Guarda sempre prima chi colpiresti, con <code>pgrep -af</code>.",
+                      en: "<code>kill</code> wants a number, <code>pkill</code> wants a name. <code>-f</code> matches <strong>the whole command line</strong>, not just the program name: handy, and dangerous. Always look first at who you would hit, with <code>pgrep -af</code>." } },
+            { cmd: "sleep 300 &", out: "[1] 1043",
+              note: { it: "La <code>&amp;</code> in fondo non aspetta: il comando parte e il prompt torna <em>subito</em>. Fra parentesi quadre il numero del lavoro, poi il PID. <code>sleep</code> è il programma più inutile che esista — non fa niente per N secondi — ed è per questo che è perfetto per esercitarsi sui processi.",
+                      en: "The trailing <code>&amp;</code> does not wait: the command starts and the prompt comes back <em>immediately</em>. In square brackets the job number, then the PID. <code>sleep</code> is the most useless program there is — it does nothing for N seconds — which is exactly why it is perfect for practising on processes." } },
         ] },
 
         { kind: "lab" },
@@ -171,11 +177,6 @@ export default {
                      PID into <code>~/lab/pid.txt</code>. The check verifies that PID is really
                      alive and really is a <code>sleep</code>.`,
             },
-            attrezzi: [
-                { cmd: "sleep N", cosa: {
-                    it: "non fa niente per il numero di secondi che gli dici, poi finisce. È il programma più inutile che ci sia, ed è proprio per questo che è perfetto per esercitarsi sui processi: dura quanto serve e non combina guai.",
-                    en: "does nothing for the number of seconds you give it, then ends. It is the most useless program there is, which is exactly why it is perfect for practising on processes: it lasts as long as you need and causes no trouble." } },
-            ],
             checks: [
                 { id: "pid-vivo",
                   why: { it: "Mandare qualcosa in background e tenerne il PID è il gesto base di ogni script che avvia un servizio e poi deve saperlo fermare.",

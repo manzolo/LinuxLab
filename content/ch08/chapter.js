@@ -54,6 +54,9 @@ export default {
               out: "     41 10.1.4.9\n     38 10.2.0.3\n     35 10.1.2.7\n     31 10.3.1.2\n     29 10.2.4.8",
               note: { it: "La catena classica: <em>estrai la colonna → ordina → conta i doppioni → ordina per conteggio → prendi i primi cinque</em>. Nessuno dei cinque comandi sa cosa sia un indirizzo IP.",
                       en: "The classic chain: <em>extract the column → sort → count duplicates → sort by count → take the first five</em>. None of the five commands knows what an IP address is." } },
+            { cmd: "echo /var/log/app.log | xargs basename", out: "app.log",
+              note: { it: "Non tutti i comandi leggono dalla pipe: <code>basename</code> vuole un <strong>argomento</strong>, e da solo davanti a una pipe resta lì ad aspettare. <code>xargs</code> è il traduttore fra i due modi — prende quello che arriva e lo mette <em>dopo</em> il comando.",
+                      en: "Not every command reads from the pipe: <code>basename</code> wants an <strong>argument</strong>, and on its own in front of a pipe it just sits there waiting. <code>xargs</code> is the translator between the two ways — it takes what arrives and puts it <em>after</em> the command." } },
         ] },
 
         { kind: "lab" },

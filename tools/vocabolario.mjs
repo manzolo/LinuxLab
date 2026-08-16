@@ -25,8 +25,14 @@ const EXTRA = ["touch", "sleep", "tar", "dd", "truncate", "modprobe", "addgroup"
                "seq", "basename", "dirname", "xargs", "tee", "nohup", "setsid"];
 
 // Sintassi della shell e comandi del lab: disponibili da sempre, non si "insegnano".
+//
+// `man`, `--help` e `type` NON stanno qui, per quanto sembrino ovvi. Ci sono stati,
+// ed è stato un errore: dandoli per scontati il controllo non si accorgeva che il
+// capitolo 1 chiede di scoprire un comando dal manuale senza aver mai mostrato che
+// faccia ha un manuale. Chi insegna dà per scontato il proprio mestiere: è proprio
+// quello che un controllo meccanico serve a non fare.
 const SEMPRE = ["lab", "cd", "ls", "pwd", "echo", "cat", "sh", "bash", "exit",
-                "true", "false", "test", "printf", "sudo", "su", "man", "type", "help"];
+                "true", "false", "test", "printf", "sudo", "su"];
 
 const decodifica = s => String(s)
     .replace(/<[^>]+>/g, "")
@@ -111,6 +117,49 @@ export function scoperti(capitoli) {
             if (mancanti.length) fuori.push({ cap, es, mancanti });
         }
     });
+    return fuori;
+}
+
+/** Elencare non è mostrare.
+ *
+ *  Un comando può stare in `commands` e nel riepilogo e non comparire mai in un
+ *  blocco `shown`: è **dichiarato** ma non **dimostrato**. Finché nessun esercizio
+ *  lo chiede è legittimo (il riepilogo cita anche i cugini: `apt`, `dnf`). Quando
+ *  invece un esercizio lo pretende, chi studia deve inventarsi come si fa.
+ *
+ *  È il caso che ha fatto nascere questa funzione: il capitolo 1 chiedeva di
+ *  scoprire un comando **dal manuale** senza aver mai fatto vedere che faccia ha
+ *  un manuale. Non blocca la build — i capitoli locali insegnano con i trascritti,
+ *  non con `shown` — ma va letto.
+ */
+export function dichiaratiMaMaiMostrati(capitoli) {
+    const L = lessico(capitoli);
+    const mostrati = new Set(SEMPRE);
+    const fuori = [];
+    for (const cap of capitoli) {
+        const qui = new Set();
+        for (const b of cap.blocks || []) {
+            if (b.kind !== "shown") continue;
+            for (const l of b.lines || []) {
+                for (const t of tokenDi(l.cmd || "")) qui.add(t);
+                // Un `cat file` in un blocco `shown` vuol dire "guarda questo contenuto":
+                // quello che c'è dentro è mostrato quanto il comando. È così che il
+                // capitolo 16 fa vedere un `if`, dentro lo script che stampa.
+                if (/^cat\b/.test((l.cmd || "").trim())) {
+                    for (const r of String(l.out || "").split("\n")) for (const t of tokenDi(r)) qui.add(t);
+                }
+            }
+        }
+        for (const t of qui) mostrati.add(t);
+        for (const es of cap.exercises || []) {
+            for (const a of es.attrezzi || []) for (const t of tokenDi(a.cmd)) mostrati.add(t);
+        }
+        if (cap.runtime === "local") continue;
+        for (const es of cap.exercises || []) {
+            const mai = [...richiestiDa(es)].filter(([t]) => L.has(t) && !mostrati.has(t)).map(([t]) => t);
+            if (mai.length) fuori.push({ cap, es, mai });
+        }
+    }
     return fuori;
 }
 

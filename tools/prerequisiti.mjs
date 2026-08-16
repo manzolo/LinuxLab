@@ -8,7 +8,7 @@
 
 import path from "node:path";
 import url from "node:url";
-import { scoperti, attrezziInutili, lessico } from "./vocabolario.mjs";
+import { scoperti, attrezziInutili, lessico, dichiaratiMaMaiMostrati } from "./vocabolario.mjs";
 
 const ROOT = path.join(path.dirname(url.fileURLToPath(import.meta.url)), "..");
 const { CAPITOLI, capitolo } = await import(path.join(ROOT, "content/index.js"));
@@ -33,6 +33,14 @@ if (stantii.length) {
     console.log("Attrezzi dichiarati ma già insegnati (da togliere):\n");
     for (const s of stantii) console.log(`  ${s.cap.id}.${s.es.id}: ${s.tok}`);
     console.log();
+}
+
+// Avviso, non errore: elencare un comando nel riepilogo non è averlo fatto vedere.
+const solo = dichiaratiMaMaiMostrati(capitoli);
+if (solo.length) {
+    console.log("Chiesto da un esercizio, ma mai fatto vedere in un blocco `shown`:\n");
+    for (const s of solo) console.log(`  ${s.cap.id}.${s.es.id}: ${s.mai.join(", ")}`);
+    console.log("\n  (avviso, non errore: il comando è elencato, ma chi studia non l'ha mai visto in azione)\n");
 }
 
 const nAttrezzi = capitoli.flatMap(c => c.exercises || []).flatMap(e => e.attrezzi || []).length;

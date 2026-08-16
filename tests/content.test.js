@@ -132,6 +132,19 @@ test("nessun attrezzo dichiarato per cose gia' insegnate", async () => {
         "l'attrezzo è già a disposizione a questo punto del percorso: la dichiarazione va tolta");
 });
 
+// Elencare non è mostrare. Un comando può stare in `commands` e nel riepilogo senza
+// comparire mai in un blocco `shown`: finché nessun esercizio lo chiede va bene (il
+// riepilogo cita anche i cugini, `apt` e `dnf`). Se invece un esercizio lo pretende,
+// chi studia deve inventarsi come si fa — ed è il caso da cui è nata questa regola:
+// il capitolo 1 chiedeva di scoprire un comando DAL MANUALE senza aver mai fatto
+// vedere che faccia ha un manuale.
+test("nessun esercizio pretende un comando mai fatto vedere in azione", async () => {
+    const { dichiaratiMaMaiMostrati } = await import(path.join(ROOT, "tools/vocabolario.mjs"));
+    const solo = dichiaratiMaMaiMostrati(capitoliCaricati.filter(c => !c.__errore));
+    assert.deepEqual(solo.map(s => `${s.cap.id}.${s.es.id}: ${s.mai.join(", ")}`), [],
+        "serve una riga nel blocco `shown` che faccia vedere il comando in azione");
+});
+
 test("gli attrezzi rimandano a un capitolo che esiste e viene dopo", () => {
     for (const cap of capitoliCaricati.filter(c => !c.__errore)) {
         for (const es of cap.exercises || []) {
