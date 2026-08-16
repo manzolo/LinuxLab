@@ -10,6 +10,12 @@ fi
 # ma si puo' riportare la macchina allo stato in cui lo script deve trovarla.
 # Senza questo, chi ha fatto i sei passaggi a mano passerebbe consegnando un
 # `echo fatto` — ed e' esattamente quello che l'esercizio deve impedire.
+# Il mondo che questo esercizio richiede: `crontab` fa chdir("/var/spool/cron/crontabs"),
+# che su Alpine e' un symlink verso /etc/crontabs. In CI quel percorso a volte non
+# c'e' e crontab fallisce con "can't change directory", in silenzio. Un seed serve
+# esattamente a questo: garantire il mondo, invece di sperare che ci sia.
+mkdir -p /etc/crontabs /var/spool/cron
+[ -d /var/spool/cron/crontabs ] || ln -sfn /etc/crontabs /var/spool/cron/crontabs
 systemctl disable --now guardiano >/dev/null 2>&1 || true
 rm -f /etc/systemd/system/guardiano.service
 systemctl daemon-reload >/dev/null 2>&1 || true
