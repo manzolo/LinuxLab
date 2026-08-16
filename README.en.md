@@ -127,6 +127,13 @@ lab check 17 1                   # check
 
 ## What this lab does NOT cover
 
+**Known limitation of this version:** nowhere does the lab teach you to **write a multi-line
+file** — neither an editor nor a heredoc — and yet from chapter 16 onwards it asks you to write
+scripts, systemd units and configuration files. It is the biggest gap left, and it is exactly
+the defect this lab set itself the rule of not having. The automatic check cannot see it: it
+compares *commands*, not skills like "I can create a multi-line file". Closing it is the
+requirement for calling this project 1.0.
+
 Plainly: boot and bootloaders (GRUB, initramfs), kernel and modules, partitioning real disks,
 virtualisation, containers as a subject of their own, permanent distribution network
 configuration. Those are real, large topics and deserve more than a passing mention.

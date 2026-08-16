@@ -128,6 +128,13 @@ lab check 17 1                   # verifica
 
 ## Cosa questo lab NON copre
 
+**Limitazione nota di questa versione:** il lab non insegna da nessuna parte a **scrivere un
+file di più righe** — né un editor né un heredoc — eppure dal capitolo 16 in poi chiede di
+scrivere script, unit di systemd e file di configurazione. È il buco più grosso rimasto, ed è
+esattamente il difetto che questo lab si è dato la regola di non avere. Il controllo automatico
+non lo vede: sa confrontare *comandi*, non competenze come «so creare un file multilinea».
+Chiuderlo è il requisito per chiamare 1.0 questo progetto.
+
 Detto senza girarci intorno: avvio e bootloader (GRUB, initramfs), kernel e moduli,
 partizionamento di dischi veri, virtualizzazione, container come argomento a sé,
 configurazione di rete permanente della distribuzione. Sono argomenti veri e grossi, e

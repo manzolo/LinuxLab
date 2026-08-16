@@ -56,6 +56,14 @@ fratelli della collana: gli eventi del motore sono codici, la UI li traduce a re
 Il test lo verifica in entrambe le direzioni: un check dichiarato e non emesso, o emesso e
 non spiegato, fa fallire la build.
 
+**Il controllo automatico vede i comandi, non le competenze.** `npm test` sa dire che `tar`
+non era stato introdotto; non sa dire che nessuno ha mai insegnato a **scrivere un file di più
+righe**. Quel vuoto esiste oggi — heredoc ed editor non compaiono da nessuna parte, e dal
+capitolo 16 in poi si chiede di scrivere script e unit — nonostante l'audit dica zero buchi. È
+la limitazione nota dichiarata nel README, ed è il requisito per la 1.0. Quando il capitolo ci
+sarà, andrà dichiarata come **prerequisito** (`requires`) dei capitoli che scrivono file, e
+l'audit andrà esteso a pretenderla: finché è solo prosa, non è difesa da niente.
+
 **Non si chiede quello che non si è spiegato.** Un esercizio può usare un comando nuovo —
 spesso deve — ma allora lo **dichiara**, e chi studia se lo trova scritto sotto la consegna,
 sempre aperto, prima di provare e senza spendere un suggerimento:
