@@ -118,7 +118,7 @@ export default {
 
     exercises: [
         {
-            id: "e1", tipo: "stato",
+            id: "e1", tipo: "stato", richiede: ["scrittura-multilinea"],
             brief: {
                 it: `Scrivi <code>~/lab/conta.sh</code>: riceve una cartella come primo argomento e
                      stampa <strong>solo il numero</strong> di file normali che contiene, contando
@@ -148,7 +148,7 @@ export default {
             ],
         },
         {
-            id: "e2", tipo: "stato",
+            id: "e2", tipo: "stato", richiede: ["scrittura-multilinea"],
             brief: {
                 it: `Scrivi <code>~/lab/salva.sh CARTELLA</code>: crea
                      <code>~/lab/salva-AAAA-MM-GG.tar.gz</code> con dentro la cartella indicata, e
@@ -193,7 +193,7 @@ export default {
             ],
         },
         {
-            id: "e3", tipo: "stato",
+            id: "e3", tipo: "stato", richiede: ["scrittura-multilinea"],
             brief: {
                 it: `Capstone del ramo browser. Scrivi <code>~/lab/riassumi.sh FILE</code> che legge
                      un log riga per riga e stampa <strong>una riga per livello</strong>

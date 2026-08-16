@@ -112,7 +112,7 @@ export default {
 
     exercises: [
         {
-            id: "e1", tipo: "stato",
+            id: "e1", tipo: "stato", richiede: ["scrittura-multilinea"],
             brief: {
                 it: `Scrivi <code>/root/lab/provisiona.sh</code>. Eseguito su una macchina pulita,
                      deve ottenere <strong>tutte</strong> queste cose:

@@ -48,8 +48,11 @@ chapter where you will really study it, which is there to say *"you did not miss
 
 This is not a good intention, it is a test: `npm test` builds the course's cumulative
 vocabulary — what the chapters up to that point declare, show and recap — and compares it with
-the commands appearing in the tasks and hints. If it finds an uncovered one, the build fails
-and names it. On the first run it found 23.
+the commands appearing in the tasks and hints. It does the same for **skills** that are not a
+command: from files and tasks it infers, for example, who requires multi-line writing, and only
+accepts the skill if a lesson already encountered has actually shown a heredoc, `vi`, and the
+exit route. If it finds a gap, the build fails and names it. On its first run the vocabulary
+found 23; the skills track made nine more visible.
 
 ## How the anti-cheat works
 
@@ -77,7 +80,7 @@ by hand, it does not pass.
 | 05 | The filesystem: /etc, /var, /proc | 🌐 |
 | 06 | Permissions and ownership | 🌐 |
 | 07 | Users, groups, sudo | 🌐 |
-| 08 | Pipes and redirection | 🌐 |
+| 08 | Pipes, redirection and text files | 🌐 |
 | 09 | Searching: find and grep | 🌐 |
 | 10 | Transforming: sed, awk, sort | 🌐 |
 | 11 | Processes and signals | 🌐 |
@@ -126,13 +129,6 @@ lab check 17 1                   # check
 > It is written in the chapter too, because it is something to know rather than hide.
 
 ## What this lab does NOT cover
-
-**Known limitation of this version:** nowhere does the lab teach you to **write a multi-line
-file** — neither an editor nor a heredoc — and yet from chapter 16 onwards it asks you to write
-scripts, systemd units and configuration files. It is the biggest gap left, and it is exactly
-the defect this lab set itself the rule of not having. The automatic check cannot see it: it
-compares *commands*, not skills like "I can create a multi-line file". Closing it is the
-requirement for calling this project 1.0.
 
 Plainly: boot and bootloaders (GRUB, initramfs), kernel and modules, partitioning real disks,
 virtualisation, containers as a subject of their own, permanent distribution network
@@ -189,7 +185,7 @@ If the image is missing, the site says so plainly instead of throwing a network 
 
 ```bash
 npm test               # content structure: bilingual, check ids, prerequisites (seconds)
-npm run audit          # who asks for a command the lab has not explained yet
+npm run audit          # commands and skills required before they are taught
 npm run test:labs      # boots the REAL machine and runs every browser exercise
 npm run test:labs-local # chapters 17-22, in the Debian container
 npm run e2e            # smoke test on headless Chrome

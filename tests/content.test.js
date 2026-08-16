@@ -132,6 +132,54 @@ test("nessun attrezzo dichiarato per cose gia' insegnate", async () => {
         "l'attrezzo è già a disposizione a questo punto del percorso: la dichiarazione va tolta");
 });
 
+// I comandi non bastano a descrivere una competenza. Questo controllo deduce dai
+// file e dalle consegne chi deve saper scrivere file multilinea, poi verifica che
+// una lezione precedente (o i blocchi prima degli esercizi dello stesso capitolo)
+// l'abbia insegnata davvero. `richiede` da solo non può far passare il test.
+test("nessun esercizio pretende una competenza non ancora insegnata", async () => {
+    const { competenzeScoperte } = await import(path.join(ROOT, "tools/vocabolario.mjs"));
+    const scoperte = competenzeScoperte(capitoliCaricati.filter(c => !c.__errore));
+    const righe = scoperte.flatMap(s => s.mancanti.map(m =>
+        `${s.cap.id}.${s.es.id}: ${m.competenza} (${m.dove})`));
+    assert.deepEqual(righe, [],
+        "la solution.sh o la consegna richiedono questa competenza: va insegnata e dichiarata con `competenze` nei blocchi precedenti o in un capitolo precedente");
+});
+
+test("regressione: togliere qualunque pezzo della lezione multilinea scopre i consumatori", async () => {
+    const { competenzeScoperte } = await import(path.join(ROOT, "tools/vocabolario.mjs"));
+    const sani = capitoliCaricati.filter(c => !c.__errore);
+    const attesi = ["ch08.e4", "ch08.e5", "ch14.e3", "ch16.e1", "ch16.e2",
+                    "ch16.e3", "ch17.e1", "ch17.e3", "ch22.e1"];
+    const mutazioni = [
+        cap => ({ ...cap, competenze: [] }),
+        cap => ({ ...cap, blocks: cap.blocks.map(b => b.kind !== "shown" ? b :
+            { ...b, lines: b.lines.filter(l => !/^vi\s/.test((l.cmd || "").trim())) }) }),
+        cap => ({ ...cap, blocks: cap.blocks.map(b => b.kind !== "shown" ? b :
+            { ...b, lines: b.lines.filter(l => !(l.cmd || "").includes("<<")) }) }),
+    ];
+    for (const muta of mutazioni) {
+        const rotti = sani.map(cap => cap.id === "ch08" ? muta(cap) : cap);
+        const visti = competenzeScoperte(rotti).map(s => `${s.cap.id}.${s.es.id}`);
+        assert.deepEqual(visti, attesi,
+            "l'audit deve mordere se manca il campo, vi oppure l'heredoc della lezione");
+    }
+});
+
+test("le competenze dedotte dai file sono dichiarate negli esercizi", async () => {
+    const { dichiarazioniCompetenzeMancanti } = await import(path.join(ROOT, "tools/vocabolario.mjs"));
+    const mancanti = dichiarazioniCompetenzeMancanti(capitoliCaricati.filter(c => !c.__errore));
+    assert.deepEqual(mancanti.map(m =>
+        `${m.cap.id}.${m.es.id}: ${m.competenza} (${m.dove})`), [],
+        "aggiungere `richiede: [\"competenza\"]`; il requisito è stato dedotto dai file, non dal campo manuale");
+});
+
+test("nessuna competenza dichiarata senza riscontro nei file", async () => {
+    const { dichiarazioniCompetenzeStantie } = await import(path.join(ROOT, "tools/vocabolario.mjs"));
+    const stantie = dichiarazioniCompetenzeStantie(capitoliCaricati.filter(c => !c.__errore));
+    assert.deepEqual(stantie.map(s => `${s.cap.id}.${s.es.id}: ${s.competenza}`), [],
+        "il campo `richiede` non è giustificato da solution.sh o consegna: va tolto, oppure va estesa la deduzione");
+});
+
 // Elencare non è mostrare. Un comando può stare in `commands` e nel riepilogo senza
 // comparire mai in un blocco `shown`: finché nessun esercizio lo chiede va bene (il
 // riepilogo cita anche i cugini, `apt` e `dnf`). Se invece un esercizio lo pretende,

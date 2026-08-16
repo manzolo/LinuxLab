@@ -142,7 +142,7 @@ export default {
 
     exercises: [
         {
-            id: "e1", tipo: "stato",
+            id: "e1", tipo: "stato", richiede: ["scrittura-multilinea"],
             brief: {
                 it: `Trasforma uno script in un servizio vero. Crea la unit
                      <code>vigile.service</code> che esegue <code>/usr/local/bin/vigile.sh</code>,
@@ -202,7 +202,7 @@ export default {
             ],
         },
         {
-            id: "e3", tipo: "stato",
+            id: "e3", tipo: "stato", richiede: ["scrittura-multilinea"],
             brief: {
                 it: `Sostituisci il cron del capitolo 14 con un <strong>timer systemd</strong>.
                      Crea <code>backup.service</code> (di tipo <code>oneshot</code>) e

@@ -9,7 +9,15 @@
 // (Nato il 2026-08-16, da una segnalazione di Andrea sull'esercizio 1.2: chiedeva
 // di scrivere un file con `>` senza che `>` comparisse da nessuna parte.)
 
+import fs from "node:fs";
+import path from "node:path";
+import url from "node:url";
+
+const ROOT = path.join(path.dirname(url.fileURLToPath(import.meta.url)), "..");
+export const SCRITTURA_MULTILINEA = "scrittura-multilinea";
+
 const OPERATORI = [
+    { tok: "<<", re: /<</ },
     { tok: ">>", re: />>/ },
     { tok: "2>", re: /2>/ },
     { tok: ">", re: /(^|[^0-9>&])>($|[^>])/ },
@@ -191,6 +199,116 @@ export function attrezziInutili(capitoli) {
             }
         }
         for (const t of insegnatiDa(cap)) prima.add(t);
+    }
+    return fuori;
+}
+
+// ---------------------------------------------------------------- competenze
+
+/** Le competenze non sono token: "so scrivere un file di più righe" non compare
+ *  in una command line. Per questo hanno una pista separata dal vocabolario.
+ *
+ *  Per `scrittura-multilinea` non basta neppure il campo `competenze`: il capitolo
+ *  deve mostrare sia un heredoc sia vi, compresa la via d'uscita senza salvare.
+ *  Così lasciare la dichiarazione e cancellare la lezione rompe comunque l'audit. */
+export function competenzeInsegnateDa(cap) {
+    const fuori = new Set();
+    const mostrate = (cap.blocks || [])
+        .filter(b => b.kind === "shown")
+        .flatMap(b => b.lines || [])
+        .map(l => decodifica(l.cmd || ""));
+    const testo = JSON.stringify(cap.blocks || []);
+    for (const competenza of cap.competenze || []) {
+        if (competenza !== SCRITTURA_MULTILINEA ||
+            (mostrate.some(cmd => /<<-?\s*(?:['"]?[A-Za-z_][A-Za-z0-9_]*['"]?)/.test(cmd)) &&
+             mostrate.some(cmd => /^vi\s/.test(cmd.trim())) && testo.includes(":q!"))) {
+            fuori.add(competenza);
+        }
+    }
+    return fuori;
+}
+
+const sorgenteSoluzione = (cap, es) => {
+    const file = path.join(ROOT, "content", cap.id, es.id, "solution.sh");
+    try { return fs.readFileSync(file, "utf8"); }
+    catch { return ""; }
+};
+
+const consegnaTesto = es => decodifica(`${es.brief?.it || ""}\n${es.brief?.en || ""}`)
+    .replace(/\s+/g, " ");
+
+/** Deduce la competenza dai fatti, indipendentemente da `richiede`:
+ *  - heredoc nella soluzione;
+ *  - printf che scrive almeno due a-capo in un file;
+ *  - consegna che chiede di creare/scrivere script, unit o configurazioni.
+ *
+ *  `richiede` entra comunque nell'unione per rendere il requisito leggibile nei
+ *  dati; un controllo separato pretende però che la deduzione lo confermi. */
+export function competenzeRichiesteDa(cap, es) {
+    const fuori = new Map();
+    const soluzione = sorgenteSoluzione(cap, es);
+    const righePrintf = soluzione.split("\n").some(riga =>
+        /\bprintf\b/.test(riga) && (riga.match(/\\n/g) || []).length >= 2 && />/.test(riga));
+    if (/<<-?\s*(?:'[A-Za-z_][A-Za-z0-9_]*'|"[A-Za-z_][A-Za-z0-9_]*"|[A-Za-z_][A-Za-z0-9_]*)/.test(soluzione)) {
+        fuori.set(SCRITTURA_MULTILINEA, "solution.sh contiene un heredoc");
+    } else if (righePrintf) {
+        fuori.set(SCRITTURA_MULTILINEA, "solution.sh scrive più righe con printf");
+    }
+
+    const consegna = consegnaTesto(es);
+    const azione = /\b(?:scrivi|write|crea|create|costruisci|build)\b/i.test(consegna);
+    const oggetto = /\b(?:script|unit|file di configurazione|configuration file)\b|\.(?:sh|service|timer|conf)\b/i.test(consegna);
+    if (azione && oggetto && !fuori.has(SCRITTURA_MULTILINEA)) {
+        fuori.set(SCRITTURA_MULTILINEA, "la consegna chiede di scrivere un file strutturato");
+    }
+
+    for (const competenza of es.richiede || []) {
+        if (!fuori.has(competenza)) fuori.set(competenza, "campo richiede");
+    }
+    return fuori;
+}
+
+/** Requisiti scoperti. La lezione del capitolo viene resa disponibile prima dei
+ *  suoi esercizi: i blocchi didattici precedono il lab nella pagina, quindi gli
+ *  esercizi di pratica dello stesso capitolo sono legittimi. */
+export function competenzeScoperte(capitoli) {
+    const disponibili = new Set();
+    const fuori = [];
+    for (const cap of capitoli) {
+        for (const c of competenzeInsegnateDa(cap)) disponibili.add(c);
+        for (const es of cap.exercises || []) {
+            const mancanti = [...competenzeRichiesteDa(cap, es)]
+                .filter(([competenza]) => !disponibili.has(competenza))
+                .map(([competenza, dove]) => ({ competenza, dove }));
+            if (mancanti.length) fuori.push({ cap, es, mancanti });
+        }
+    }
+    return fuori;
+}
+
+/** La deduzione protegge anche dalla dimenticanza del metadato: se i file dicono
+ *  che una competenza serve, `richiede` deve renderlo visibile anche nei dati. */
+export function dichiarazioniCompetenzeMancanti(capitoli) {
+    const fuori = [];
+    for (const cap of capitoli) for (const es of cap.exercises || []) {
+        const dichiarate = new Set(es.richiede || []);
+        for (const [competenza, dove] of competenzeRichiesteDa({ ...cap }, { ...es, richiede: [] })) {
+            if (!dichiarate.has(competenza)) fuori.push({ cap, es, competenza, dove });
+        }
+    }
+    return fuori;
+}
+
+/** Anche il verso opposto conta: un `richiede` che i file non giustificano è
+ *  metadato stantio. Se nasce una competenza nuova, si estende prima la deduzione
+ *  e solo dopo la si dichiara negli esercizi. */
+export function dichiarazioniCompetenzeStantie(capitoli) {
+    const fuori = [];
+    for (const cap of capitoli) for (const es of cap.exercises || []) {
+        const inferite = competenzeRichiesteDa({ ...cap }, { ...es, richiede: [] });
+        for (const competenza of es.richiede || []) {
+            if (!inferite.has(competenza)) fuori.push({ cap, es, competenza });
+        }
     }
     return fuori;
 }

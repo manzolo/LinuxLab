@@ -1,6 +1,6 @@
 {
   "name": "linuxlab",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "EDU-LINUX · Linux Lab — imparare Linux con un terminale vero nel browser",
@@ -14,7 +14,7 @@
   "scripts": {
     "serve": "python3 -m http.server 8801",
     "image": "make -C lab all",
-    "test": "node --test tests/content.test.js",
+    "test": "node --test --test-isolation=none tests/content.test.js",
     "audit": "node tools/prerequisiti.mjs",
     "test:labs": "node tests/labs.mjs",
     "test:labs-local": "node tests/labs-local.mjs",

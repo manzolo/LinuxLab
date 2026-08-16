@@ -56,13 +56,15 @@ fratelli della collana: gli eventi del motore sono codici, la UI li traduce a re
 Il test lo verifica in entrambe le direzioni: un check dichiarato e non emesso, o emesso e
 non spiegato, fa fallire la build.
 
-**Il controllo automatico vede i comandi, non le competenze.** `npm test` sa dire che `tar`
-non era stato introdotto; non sa dire che nessuno ha mai insegnato a **scrivere un file di più
-righe**. Quel vuoto esiste oggi — heredoc ed editor non compaiono da nessuna parte, e dal
-capitolo 16 in poi si chiede di scrivere script e unit — nonostante l'audit dica zero buchi. È
-la limitazione nota dichiarata nel README, ed è il requisito per la 1.0. Quando il capitolo ci
-sarà, andrà dichiarata come **prerequisito** (`requires`) dei capitoli che scrivono file, e
-l'audit andrà esteso a pretenderla: finché è solo prosa, non è difesa da niente.
+**Il controllo automatico tratta separatamente comandi e competenze.** Una competenza non è un
+token della shell: per esempio, «so scrivere un file di più righe» non può emergere dal solo
+vocabolario. Il capitolo che la insegna la dichiara in `competenze`; gli esercizi consumatori in
+`richiede`. Ma l'audit non si fida di quei campi: deduce il requisito da `solution.sh` e dalla
+consegna, e per `scrittura-multilinea` considera valida la lezione solo se un blocco `shown`
+mostra sia un heredoc sia `vi`, compresa `:q!`. Dimenticare il metadato, lasciare la sola
+dichiarazione o cancellare metà lezione fa fallire `npm test` indicando esercizio, competenza e
+rimedio. Un controllo nuovo va provato anche in negativo: deve fallire sul difetto che dichiara
+di coprire.
 
 **Non si chiede quello che non si è spiegato.** Un esercizio può usare un comando nuovo —
 spesso deve — ma allora lo **dichiara**, e chi studia se lo trova scritto sotto la consegna,

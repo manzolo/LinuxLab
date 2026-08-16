@@ -48,8 +48,12 @@ il capitolo dove lo studierai davvero, che serve a dire *«non ti sei perso una 
 
 Non è una buona intenzione, è un test: `npm test` costruisce il vocabolario cumulativo del
 percorso — quello che i capitoli fino a lì dichiarano, mostrano e riepilogano — e lo confronta
-con i comandi che compaiono nelle consegne e nei suggerimenti. Se ne trova uno scoperto, la
-build fallisce e dice quale. Al primo giro ne ha trovati 23.
+con i comandi che compaiono nelle consegne e nei suggerimenti. Fa lo stesso con le
+**competenze** che non sono un comando: dai file e dalle consegne deduce, per esempio, chi
+pretende la scrittura multilinea, e accetta la competenza solo se una lezione già incontrata ha
+mostrato davvero heredoc, `vi` e la via d'uscita. Se trova un buco, la build fallisce e lo
+nomina. Al primo giro il vocabolario ne ha trovati 23; la pista delle competenze ne ha resi
+visibili altri nove.
 
 ## Come funziona l'anti-trucco
 
@@ -77,7 +81,7 @@ mano, non passa.
 | 05 | Il filesystem: /etc, /var, /proc | 🌐 |
 | 06 | Permessi e proprietà | 🌐 |
 | 07 | Utenti, gruppi, sudo | 🌐 |
-| 08 | Pipe e redirezione | 🌐 |
+| 08 | Pipe, redirezioni e file di testo | 🌐 |
 | 09 | Cercare: find e grep | 🌐 |
 | 10 | Trasformare: sed, awk, sort | 🌐 |
 | 11 | Processi e segnali | 🌐 |
@@ -127,13 +131,6 @@ lab check 17 1                   # verifica
 > cosa. È scritto anche nel capitolo, perché è una cosa che va saputa e non nascosta.
 
 ## Cosa questo lab NON copre
-
-**Limitazione nota di questa versione:** il lab non insegna da nessuna parte a **scrivere un
-file di più righe** — né un editor né un heredoc — eppure dal capitolo 16 in poi chiede di
-scrivere script, unit di systemd e file di configurazione. È il buco più grosso rimasto, ed è
-esattamente il difetto che questo lab si è dato la regola di non avere. Il controllo automatico
-non lo vede: sa confrontare *comandi*, non competenze come «so creare un file multilinea».
-Chiuderlo è il requisito per chiamare 1.0 questo progetto.
 
 Detto senza girarci intorno: avvio e bootloader (GRUB, initramfs), kernel e moduli,
 partizionamento di dischi veri, virtualizzazione, container come argomento a sé,
@@ -192,7 +189,7 @@ Se l'immagine manca, il sito lo dice in chiaro invece di dare un errore di rete.
 
 ```bash
 npm test               # struttura dei contenuti: bilingue, id dei check, prerequisiti (secondi)
-npm run audit          # chi chiede un comando che il lab non ha ancora spiegato
+npm run audit          # comandi e competenze chiesti prima di essere spiegati
 npm run test:labs      # avvia la VERA macchina ed esegue tutti gli esercizi del browser
 npm run test:labs-local # gli esercizi dei capitoli 17-22, nel container Debian
 npm run e2e            # smoke test su Chrome headless

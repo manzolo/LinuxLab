@@ -158,7 +158,7 @@ export default {
             ],
         },
         {
-            id: "e3", tipo: "stato",
+            id: "e3", tipo: "stato", richiede: ["scrittura-multilinea"],
             brief: {
                 it: `Adesso scrivi lo script che cron chiamerà. <code>/usr/local/bin/backup.sh</code>
                      deve essere <strong>eseguibile</strong>, creare un archivio
