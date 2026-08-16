@@ -1,8 +1,4 @@
-servizio=$(sed -n '1s/^[^=]*=//p' /opt/lab/state/nota-attesa)
-ambiente=$(sed -n '2s/^[^=]*=//p' /opt/lab/state/nota-attesa)
-responsabile=$(sed -n '3s/^[^=]*=//p' /opt/lab/state/nota-attesa)
-cat > "$LAB/nota.conf" <<EOF
-servizio=$servizio
-ambiente=$ambiente
-responsabile=$responsabile
-EOF
+# Il banco automatico non può pilotare un editor interattivo: applica la stessa
+# singola correzione che la persona esegue con vi. Il check resta sullo stato.
+responsabile=$(sed -n 's/^responsabile=//p' "$LAB/incarico.txt")
+sed -i "s/^responsabile=.*/responsabile=$responsabile/" "$LAB/nota.conf"

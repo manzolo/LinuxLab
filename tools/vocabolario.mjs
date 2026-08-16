@@ -258,7 +258,8 @@ export function competenzeRichiesteDa(cap, es) {
     const consegna = consegnaTesto(es);
     const azione = /\b(?:scrivi|write|crea|create|costruisci|build)\b/i.test(consegna);
     const oggetto = /\b(?:script|unit|file di configurazione|configuration file)\b|\.(?:sh|service|timer|conf)\b/i.test(consegna);
-    if (azione && oggetto && !fuori.has(SCRITTURA_MULTILINEA)) {
+    const usaVi = /\bvi\b/.test(consegna);
+    if ((usaVi || (azione && oggetto)) && !fuori.has(SCRITTURA_MULTILINEA)) {
         fuori.set(SCRITTURA_MULTILINEA, "la consegna chiede di scrivere un file strutturato");
     }
 

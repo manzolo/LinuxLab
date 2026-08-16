@@ -280,27 +280,27 @@ export default {
         {
             id: "e5", tipo: "stato", richiede: ["scrittura-multilinea"],
             brief: {
-                it: `Apri <code>~/lab/incarico.txt</code>: contiene tre righe generate per questa
-                     sessione. Usa <code>vi ~/lab/nota.conf</code> e riproducile nello stesso ordine,
-                     carattere per carattere. Salva ed esci. La verifica confronta il file, non i
-                     tasti premuti: il lavoro vero è ottenere uno stato corretto e saper uscire
-                     dall'editor senza perderlo.`,
-                en: `Open <code>~/lab/incarico.txt</code>: it contains three lines generated for
-                     this session. Use <code>vi ~/lab/nota.conf</code> and reproduce them in the
-                     same order, character for character. Save and quit. The check compares the
-                     file, not the keys you pressed: the real job is reaching the right state and
-                     knowing how to leave the editor without losing it.`,
+                it: `In <code>~/lab/nota.conf</code> c'è già una configurazione di sei righe, ma
+                     <code>responsabile=DA_CORREGGERE</code> è sbagliata. Leggi il valore generato
+                     in <code>~/lab/incarico.txt</code>, poi usa <code>vi ~/lab/nota.conf</code> per
+                     sostituire <strong>solo quella riga</strong>. Salva ed esci: la verifica
+                     pretende il resto del file identico byte per byte.`,
+                en: `A six-line configuration already exists in <code>~/lab/nota.conf</code>, but
+                     <code>responsabile=DA_CORREGGERE</code> is wrong. Read the generated value in
+                     <code>~/lab/incarico.txt</code>, then use <code>vi ~/lab/nota.conf</code> to
+                     replace <strong>that line only</strong>. Save and quit: the check requires
+                     the rest of the file to remain identical byte for byte.`,
             },
             checks: [
                 { id: "nota-multilinea",
                   why: { it: "Uno script, una unit e una configurazione sono prima di tutto file di testo con più righe. Qui la verifica non può sapere quale editor hai usato, ma può sapere se hai conservato tutte le righe, nell'ordine esatto.",
                          en: "A script, a unit and a configuration are first of all multi-line text files. The check cannot know which editor you used, but it can tell whether you preserved every line in the exact order." },
-                  nudge: { it: "Confronta i due file con <code>diff -u ~/lab/incarico.txt ~/lab/nota.conf</code>. In <code>vi</code>: <code>i</code> per scrivere, <code>Esc</code> e <code>:wq</code> per salvare e uscire; <code>:q!</code> scarta invece le modifiche.",
-                           en: "Compare the files with <code>diff -u ~/lab/incarico.txt ~/lab/nota.conf</code>. In <code>vi</code>: <code>i</code> to type, <code>Esc</code> then <code>:wq</code> to save and quit; <code>:q!</code> discards changes instead." } },
+                  nudge: { it: "<code>cat ~/lab/incarico.txt; cat ~/lab/nota.conf</code> mostra il valore atteso e il file ottenuto. In <code>vi</code>: <code>i</code> per scrivere, <code>Esc</code> e <code>:wq</code> per salvare e uscire; <code>:q!</code> scarta invece le modifiche.",
+                           en: "<code>cat ~/lab/incarico.txt; cat ~/lab/nota.conf</code> shows the expected value and the resulting file. In <code>vi</code>: <code>i</code> to type, <code>Esc</code> then <code>:wq</code> to save and quit; <code>:q!</code> discards changes instead." } },
             ],
             hints: [
-                { it: "Prima leggi la traccia con <code>cat ~/lab/incarico.txt</code>; le parole cambiano a ogni semina.", en: "First read the assignment with <code>cat ~/lab/incarico.txt</code>; the words change with every seed." },
-                { it: "Dentro <code>vi</code>, premi <code>i</code>, scrivi le tre righe, poi <code>Esc</code>. Digita <code>:wq</code> e premi Invio.", en: "Inside <code>vi</code>, press <code>i</code>, type the three lines, then <code>Esc</code>. Type <code>:wq</code> and press Enter." },
+                { it: "Prima leggi <code>cat ~/lab/incarico.txt</code> e guarda <code>cat ~/lab/nota.conf</code>: il nome cambia a ogni semina, ma una sola riga va corretta.", en: "First read <code>cat ~/lab/incarico.txt</code> and inspect <code>cat ~/lab/nota.conf</code>: the name changes with every seed, but only one line needs fixing." },
+                { it: "Dentro <code>vi</code>, porta il cursore sulla riga, premi <code>i</code> e correggila. Poi <code>Esc</code>, <code>:wq</code> e Invio.", en: "Inside <code>vi</code>, move the cursor to the line, press <code>i</code> and fix it. Then <code>Esc</code>, <code>:wq</code> and Enter." },
                 { it: "Se hai fatto confusione e vuoi ricominciare senza salvare: <code>Esc</code>, poi <code>:q!</code> e Invio.", en: "If you got tangled and want to start again without saving: <code>Esc</code>, then <code>:q!</code> and Enter." },
             ],
         },

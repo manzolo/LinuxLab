@@ -1,6 +1,3 @@
-# Valori credibili ma cablati: la traccia cambia a ogni seme.
-cat > "$LAB/nota.conf" <<'EOF'
-servizio=nginx
-ambiente=produzione
-responsabile=andrea
-EOF
+# La scorciatoia ovvia: copiare l'incarico nel file. Contiene la riga giusta,
+# ma distrugge le altre cinque e deve fallire il confronto byte per byte.
+cp "$LAB/incarico.txt" "$LAB/nota.conf"
