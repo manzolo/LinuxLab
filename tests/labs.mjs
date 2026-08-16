@@ -106,10 +106,16 @@ async function provaEsercizio(cap, es) {
         else ok(`${etichetta} seme ${seme}: parte non superato`);
 
         const sol = await chiedi("solve", dir);
-        if (!sol.ok && sol.code !== 0) { /* alcune soluzioni finiscono con exit non-zero innocuo */ }
         const dopo = await chiedi("check", dir);
         if (dopo.ok) ok(`${etichetta} seme ${seme}: la soluzione passa`);
-        else ko(`${etichetta} seme ${seme}: la soluzione NON passa — ${(dopo.out || "").replace(/\n/g, " | ").slice(0, 220)}`);
+        else {
+            // Quando la verifica fallisce si mostra anche cosa ha detto la SOLUZIONE:
+            // se e' stata lei a non riuscire (un comando che fallisce in silenzio),
+            // il messaggio del check da solo manda fuori strada.
+            const voce = (sol.out || "").trim();
+            ko(`${etichetta} seme ${seme}: la soluzione NON passa — ${(dopo.out || "").replace(/\n/g, " | ").slice(0, 220)}` +
+               (voce ? `  [la soluzione aveva detto: ${voce.replace(/\n/g, " | ").slice(0, 160)} · uscita ${sol.code}]` : `  [la soluzione non ha detto niente, uscita ${sol.code}]`));
+        }
     }
 
     // 3: il barare deve fallire, e deve fallire su un seme DIVERSO da quello in cui
