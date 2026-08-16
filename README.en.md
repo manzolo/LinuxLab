@@ -19,11 +19,11 @@ it back to new in half a second.
 You read on the left, you try on the right. Every chapter has exercises the machine
 **really checks**, by looking at how its filesystem ended up.
 
-![The chapter and the terminal, side by side](img/capitolo.png)
+![The chapter and the terminal, side by side](img/en/capitolo.png)
 
 ## When you get it wrong, we do not say "no"
 
-![A verdict that teaches](img/verdetto.png)
+![A verdict that teaches](img/en/verdetto.png)
 
 Every failed check gives you three things, in this order: **the fact** measured by the machine
 (`got=… want=…`), **the why** in one sentence, and **a command to look at the problem** — not
@@ -32,14 +32,14 @@ first, change second.
 
 ## And before you try, the picture
 
-![The exercise help](img/aiuto.png)
+![The exercise help](img/en/aiuto.png)
 
 Every exercise has a help panel telling you what the check will look at and which commands you
 need. The real hints stay below, and open one at a time.
 
 ## And nothing you were never told about
 
-![Tools on loan](img/attrezzi.png)
+![Tools on loan](img/en/attrezzi.png)
 
 An exercise may use a command the lab has not taught yet — sometimes it must, because chapter 1
 without the `>` sign cannot have you create a file. But then it **declares it**: what it does,

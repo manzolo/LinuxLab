@@ -109,7 +109,10 @@ userà chi studia).
 con fallback in memoria: in navigazione privata `localStorage` lancia.
 
 **README.md (IT) e README.en.md sono documenti paralleli**: le modifiche visibili all'utente
-vanno in entrambi.
+vanno in entrambi — **immagini comprese**. `npm run screenshot` genera le scene in tutte e due
+le lingue (italiano in `img/`, inglese in `img/en/`); un README inglese con schermate in
+italiano si smentisce da solo alla prima occhiata. Per rifarne una sola:
+`node tools/screenshot.mjs http://127.0.0.1:8801/ en`.
 
 ## Aggiungere un capitolo
 

@@ -19,7 +19,11 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = process.argv[2] || "http://127.0.0.1:8801/";
 const PORTA = 9477;
-const DEST = join(ROOT, "img");
+// Le immagini si fanno in TUTTE E DUE le lingue: il README inglese e' un documento
+// parallelo, non una traduzione di cortesia, e mostrargli schermate in italiano lo
+// smentiva a colpo d'occhio. L'italiano resta in img/, l'inglese va in img/en/.
+const LINGUE = process.argv[3] ? [process.argv[3]] : ["it", "en"];
+const dest = lingua => lingua === "it" ? join(ROOT, "img") : join(ROOT, "img", lingua);
 const L = 1400, A = 900;
 
 const profilo = mkdtempSync(join(tmpdir(), "linuxlab-shot-"));
@@ -52,6 +56,8 @@ await cmd("Network.setCacheDisabled", { cacheDisabled: true });
 await cmd("Emulation.setDeviceMetricsOverride", { width: L, height: A, deviceScaleFactor: 1, mobile: false });
 
 const val = async e => (await cmd("Runtime.evaluate", { expression: e, returnByValue: true, awaitPromise: true }))?.result?.value;
+
+let DEST = join(ROOT, "img");
 
 async function apri(query, profondita = "base") {
     await cmd("Page.navigate", { url: BASE + query });
@@ -99,33 +105,36 @@ async function scatta(nome) {
     console.log("  " + nome);
 }
 
-console.log(`immagini in img/  (da ${BASE})`);
+for (const lingua of LINGUE) {
+    DEST = dest(lingua);
+    console.log(`immagini ${lingua} in ${DEST.replace(ROOT + "/", "")}/  (da ${BASE})`);
 
-// 1 — il capitolo e il terminale, fianco a fianco
-await apri("?lang=it&ch=2");
-await scatta("capitolo.png");
+    // 1 — il capitolo e il terminale, fianco a fianco
+    await apri(`?lang=${lingua}&ch=2`);
+    await scatta("capitolo.png");
 
-// 2 — il verdetto che insegna: si preme Verifica SENZA aver risolto, cosi' si vede
-//     il fatto misurato, il perche', e il comando per guardare il problema.
-await apri("?lang=it&ch=6");
-await val(`(() => { const b = [...document.querySelectorAll('.es.aperto .es-barra .btn.primario')][0];
-    if (b && !b.disabled) b.click(); })()`);
-for (let i = 0; i < 30; i++) { await dormi(700); if (await val(`!!document.querySelector('.verdetto')`)) break; }
-await dormi(900);
-await scatta("verdetto.png");
+    // 2 — il verdetto che insegna: si preme Verifica SENZA aver risolto, cosi' si vede
+    //     il fatto misurato, il perche', e il comando per guardare il problema.
+    await apri(`?lang=${lingua}&ch=6`);
+    await val(`(() => { const b = [...document.querySelectorAll('.es.aperto .es-barra .btn.primario')][0];
+        if (b && !b.disabled) b.click(); })()`);
+    for (let i = 0; i < 30; i++) { await dormi(700); if (await val(`!!document.querySelector('.verdetto')`)) break; }
+    await dormi(900);
+    await scatta("verdetto.png");
 
-// 3 — l'aiuto dell'esercizio, che si legge PRIMA di provare
-await apri("?lang=it&ch=9");
-await val(`(() => { const b = [...document.querySelectorAll('.es.aperto .es-corpo button')]
-    .find(x => /Aiuto|Help/.test(x.textContent)); if (b) b.click(); })()`);
-await dormi(900);
-await scatta("aiuto.png");
+    // 3 — l'aiuto dell'esercizio, che si legge PRIMA di provare
+    await apri(`?lang=${lingua}&ch=9`);
+    await val(`(() => { const b = [...document.querySelectorAll('.es.aperto .es-corpo button')]
+        .find(x => /Aiuto|Help/.test(x.textContent)); if (b) b.click(); })()`);
+    await dormi(900);
+    await scatta("aiuto.png");
 
-// 4 — gli attrezzi in prestito: l'esercizio 1.2 usa `>`, che si studia al capitolo 8,
-//     e lo dice sotto la consegna invece di darlo per scontato.
-await apri("?lang=it&ch=1");
-await apriEsercizio("e2");
-await scatta("attrezzi.png");
+    // 4 — gli attrezzi in prestito: l'esercizio 1.2 usa `>`, che si studia al capitolo 8,
+    //     e lo dice sotto la consegna invece di darlo per scontato.
+    await apri(`?lang=${lingua}&ch=1`);
+    await apriEsercizio("e2");
+    await scatta("attrezzi.png");
+}
 
 ws.close();
 console.log("fatto");
