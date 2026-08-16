@@ -13,6 +13,17 @@ const OPZIONI = {
     memory_size: 128 * 1024 * 1024,
     vga_memory_size: 2 * 1024 * 1024,
     uart1: true,                       // il canale di verifica
+    // v86 cattura mouse e tastiera per la macchina emulata: registra un listener
+    // `wheel` NON passivo su window e chiama preventDefault() su OGNI rotellina
+    // della pagina — il che rendeva impossibile scorrere il capitolo con la rotella.
+    // Qui non servono: la macchina si pilota dalla seriale, non ha uno schermo VGA
+    // e nessuno usa la sua tastiera PS/2. Spegnerli restituisce la pagina al lettore.
+    disable_mouse: true,
+    disable_keyboard: true,
+    // e niente speaker: v86 aprirebbe un AudioContext per l'altoparlante emulato,
+    // che il browser blocca finche' non c'e' un gesto dell'utente — tre avvisi in
+    // console per un suono che non useremo mai.
+    disable_speaker: true,
     bzimage_initrd_from_filesystem: true,
     cmdline: "rw root=host9p rootfstype=9p rootflags=trans=virtio,cache=loose " +
              "modules=virtio_pci tsc=reliable init_on_free=on console=ttyS0",
@@ -81,7 +92,22 @@ export function avvia() {
  * terminale nero e crede che sia rotto.
  */
 export function risveglia() {
-    setTimeout(() => emulatore?.serial0_send("\n"), 250);
+    // Ctrl-L, non "\n". Un a-capo esegue un comando vuoto e lascia a schermo un
+    // prompt in piu': sembra che qualcuno abbia premuto Invio al posto tuo.
+    // Ctrl-L chiede a readline di ridisegnare il prompt e basta.
+    return new Promise(res => setTimeout(() => {
+        emulatore?.serial0_send("\x0c");
+        setTimeout(res, 300);
+    }, 250));
+}
+
+/** Chiede un prompt SENZA pulire lo schermo. Serve dopo aver scritto un banner:
+ *  Ctrl-L cancellerebbe anche quello. */
+export function mostraPrompt() {
+    return new Promise(res => setTimeout(() => {
+        emulatore?.serial0_send("\n");
+        setTimeout(res, 300);
+    }, 150));
 }
 
 /**
@@ -94,6 +120,7 @@ export async function reimposta() {
     await emulatore.restore_state(statoIniziale.slice().buffer);
     // Il ripristino azzera anche l'agente: aspetta che sia di nuovo raggiungibile
     // prima di dire "pronta", altrimenti il primo `Verifica` dopo il reset fallisce.
+    // Del prompt si occupa chi ha chiamato: dopo un banner serve un a-capo, non
+    // un Ctrl-L, che il banner lo cancellerebbe.
     await new Promise(r => setTimeout(r, 400));
-    risveglia();
 }

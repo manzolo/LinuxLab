@@ -22,6 +22,7 @@ const { V86 } = await import(path.join(ROOT, "vendor/v86/libv86.mjs"));
 
 const em = new V86({
     memory_size: 128 * 1024 * 1024, vga_memory_size: 2 * 1024 * 1024, uart1: true,
+    disable_mouse: true, disable_keyboard: true, disable_speaker: true,
     bzimage_initrd_from_filesystem: true,
     cmdline: "rw root=host9p rootfstype=9p rootflags=trans=virtio,cache=loose " +
              "modules=virtio_pci tsc=reliable init_on_free=on console=ttyS0",
@@ -81,10 +82,9 @@ await agente("write", "/opt/lab/prova/e1/seed.sh", "755",
     Buffer.from('mkdir -p "$LAB/nuovo"; echo ciao > "$LAB/nuovo/file.txt"\n:\n', "utf8").toString("base64"));
 const s = await agente("seed", "prova/e1", 4242);
 s.ok ? ok("il nuovo esercizio è stato seminato") : ko(`seed fallito: ${s.out}`);
-// Come fa js/lab/runner.js: un a-capo fa ridisegnare il prompt, e il PROMPT_COMMAND
-// riporta a casa la shell prima che l'utente digiti qualcosa.
-em.serial0_send("\n");
-await dormi(1200);
+// NESSUN sollecito dal sito: il recupero deve avvenire da solo, nella shell,
+// prima del comando successivo. Un colpetto da qui lascerebbe a schermo un prompt
+// che sembra un Invio dato da un fantasma — ed e' quello che Andrea ha segnalato.
 
 // 3) IL PUNTO: il terminale dell'utente deve continuare a funzionare
 out = await digita("ls -a");

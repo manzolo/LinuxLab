@@ -94,6 +94,25 @@ const clicca = async (sel) => val(`(() => {
     if (!b) return "(nessun pulsante)"; const t = b.textContent; b.click(); return t;
 })()`);
 
+// ---- la rotellina deve scorrere il testo -----------------------------------
+// v86 registra un listener `wheel` NON passivo su window e annulla ogni rotellina
+// della pagina, per pilotare il mouse della macchina emulata. Qui la macchina si
+// pilota dalla seriale, quindi mouse e tastiera emulati sono spenti — ma se un
+// domani qualcuno li riaccende, questo test se ne accorge subito.
+{
+    const dove = await val(`(() => { const c = document.querySelector('.capitolo');
+        c.scrollTop = 0; const r = c.getBoundingClientRect();
+        return { x: Math.round(r.left + r.width/2), y: Math.round(r.top + r.height/2) }; })()`);
+    for (let i = 0; i < 5; i++) {
+        await cmd("Input.dispatchMouseEvent", { type: "mouseWheel", x: dove.x, y: dove.y, deltaX: 0, deltaY: 200, pointerType: "mouse" });
+        await dormi(120);
+    }
+    await dormi(600);
+    const st = await val(`document.querySelector('.capitolo').scrollTop || document.scrollingElement.scrollTop`);
+    st > 50 ? ok(`la rotellina scorre il capitolo (${st}px)`)
+            : ko("la rotellina non scorre il capitolo: qualcuno annulla l'evento wheel");
+}
+
 // ---- Nuovo mondo -----------------------------------------------------------
 let prima = await testoTerminale();
 let fatto = await clicca(".es.aperto .es-barra .btn.mini:nth-child(3)");

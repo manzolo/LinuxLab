@@ -31,6 +31,7 @@ export const OPZIONI_MACCHINA = {
     memory_size: 128 * 1024 * 1024,
     vga_memory_size: 2 * 1024 * 1024,
     uart1: true,
+    disable_mouse: true, disable_keyboard: true, disable_speaker: true,
     bzimage_initrd_from_filesystem: true,
     cmdline: "rw root=host9p rootfstype=9p rootflags=trans=virtio,cache=loose " +
              "modules=virtio_pci tsc=reliable init_on_free=on console=ttyS0",

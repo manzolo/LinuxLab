@@ -64,6 +64,16 @@ while IFS= read -r line; do
             # capitolo 2 spiega nella parte PRO — sarebbe grottesco causarlo noi.)
             # Si svuota il contenuto e si tiene l'inode.
             mkdir -p "$LAB" "$STATE"
+            # Prima di svuotare: smontare quello che un esercizio precedente ha lasciato
+            # montato dentro l'area di lavoro (il capitolo 13 monta un filesystem su loop
+            # device) e staccare i loop. Senza, `rm -rf` non riesce a svuotare e la
+            # macchina si trascina mount e memoria per tutti i 60 esercizi: a un certo
+            # punto qualcosa smette di funzionare, in un punto che sembra scollegato
+            # dalla causa. (E' successo: il capitolo 14 falliva in CI per colpa del 13.)
+            for m in $(awk -v l="$LAB" 'index($2, l) == 1 {print $2}' /proc/mounts 2>/dev/null | sort -r); do
+                umount "$m" 2>/dev/null || umount -l "$m" 2>/dev/null
+            done
+            losetup -D 2>/dev/null
             find "$LAB" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null
             # via ogni traccia dell'esercizio precedente: risposte consegnate,
             # valori memorizzati dal seed, tutto. Resta solo il seme, che scriviamo ora.

@@ -7,7 +7,6 @@
 
 import { CONTENT_BASE } from "../config.js";
 import { scrivi, semina, verifica, ricomincia, leggiVerdetto } from "./agent.js";
-import { risveglia } from "./machine.js";
 
 const cache = new Map();
 
@@ -34,11 +33,9 @@ export async function preparaEsercizio(cap, es, seme) {
     await scrivi(`/opt/lab/${d}/check.sh`, check, "755");
     const r = await semina(d, seme);
     if (!r.ok) throw new Error(`il seed e' fallito: ${r.out}`);
-    // Il mondo precedente e' stato svuotato: se la shell dell'utente era in una
-    // sottocartella, quella non c'e' piu'. Un a-capo fa ridisegnare il prompt, e
-    // il PROMPT_COMMAND della shell la riporta a casa PRIMA che l'utente digiti —
-    // altrimenti il suo primo comando fallirebbe con "cannot open directory".
-    risveglia();
+    // Del recupero della cartella si occupa la shell da sola (trap DEBUG in
+    // /etc/profile.d/lab.sh): qui NON si manda nessun colpetto, perche' ogni
+    // sollecito lascia a schermo un prompt che sembra un Invio dato da un fantasma.
     return r;
 }
 
@@ -50,7 +47,5 @@ export async function verificaEsercizio(cap, es) {
 
 /** Ricomincia da capo mantenendo lo stesso mondo. */
 export async function ricominciaEsercizio(cap, es) {
-    const r = await ricomincia(dirGuest(cap, es));
-    risveglia();   // stesso motivo di preparaEsercizio
-    return r;
+    return ricomincia(dirGuest(cap, es));
 }

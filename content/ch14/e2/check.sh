@@ -1,5 +1,10 @@
 riga=$(crontab -l 2>/dev/null | grep -v '^[[:space:]]*#' | grep 'backup.sh' | head -1)
 lab_fact crontab "$(crontab -l 2>/dev/null | tr '\n' ' | ' | head -c 120)"
+# Diagnostica: se un giorno il crontab risultasse vuoto senza motivo apparente,
+# queste due righe dicono se il comando c'e' e cosa c'e' scritto sul disco,
+# invece di lasciare indovinare. (Serviti davvero, per un fallimento in CI.)
+lab_fact crontab_comando "$(command -v crontab || echo '(assente)')"
+lab_fact crontab_su_disco "$(head -c 90 /etc/crontabs/root 2>/dev/null | tr '\n' ' | ' || echo '(nessun file)')"
 if [ -z "$riga" ]; then
     lab_check orario-giusto 1 "(nessuna riga con backup.sh)" "30 3 * * * /usr/local/bin/backup.sh"
     lab_check ogni-giorno 1; lab_check comando-giusto 1

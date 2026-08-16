@@ -15,7 +15,16 @@ cd "$LAB" 2>/dev/null || true
 # directory che non esiste piu': il prompt continua a mostrarne il nome ma ogni
 # comando risponde "cannot open directory". Qui la shell si riporta a casa da sola,
 # in silenzio, prima di ogni prompt.
+# Il trap DEBUG agisce PRIMA di ogni comando: cosi' non serve nessun sollecito dal
+# sito (che lascerebbe a schermo un prompt di troppo) e nemmeno il primo comando
+# dopo il cambio fallisce. Il controllo e' ristretto a $LAB: se cancelli una tua
+# cartella altrove, il fenomeno resta visibile — ed e' materia del capitolo 2.
 if [ -n "$BASH_VERSION" ]; then
-    PROMPT_COMMAND='[ -e "$PWD" ] || cd "$LAB" 2>/dev/null'
-    export PROMPT_COMMAND
+    __lab_a_casa() {
+        case "$PWD" in
+            "$LAB"|"$LAB"/*) [ -e "$PWD" ] || cd "$LAB" 2>/dev/null ;;
+        esac
+    }
+    PROMPT_COMMAND='__lab_a_casa'
+    trap '__lab_a_casa' DEBUG
 fi

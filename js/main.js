@@ -6,7 +6,7 @@ import { CAPITOLI, capitolo, primoCapitolo } from "../content/index.js";
 import { disegnaCapitolo } from "./ui/chapter.js";
 import { inizializzaEsercizi, disegnaEsercizi, macchinaPronta, esercizioCorrente } from "./ui/exercises.js";
 import { apriSommario, apriIntro, apriQuaderno } from "./ui/overlays.js";
-import { avvia, onProgresso, reimposta } from "./lab/machine.js";
+import { avvia, onProgresso, reimposta, mostraPrompt } from "./lab/machine.js";
 import { attendiAgente } from "./lab/agent.js";
 import { creaTerminale, adatta, pulisciTerminale, scriviNota } from "./lab/terminal.js";
 
@@ -115,6 +115,7 @@ $("btnReimposta").onclick = async () => {
         await reimposta();
         pulisciTerminale();
         scriviNota(t("labReimposta"), 79);
+        await mostraPrompt();          // un a-capo: il banner resta, il prompt torna
         await riseminaEsercizioCorrente();
     } finally {
         btn.disabled = false; btn.textContent = testo;
