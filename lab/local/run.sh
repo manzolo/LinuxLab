@@ -5,9 +5,10 @@
 # mantenere, kernel, bootloader, rete, porte e istruzioni per tre sistemi operativi.
 # E' esattamente il tipo di manutenzione che questo progetto ha deciso di non avere.
 #
-# Il prezzo, detto chiaro: i capitoli 21-22 usano --privileged, e i device-mapper e
-# gli array md sono GLOBALI dell'host. Per questo tutto quello che creiamo si chiama
-# lab-* e c'e' `lab-cleanup`.
+# Il prezzo, detto chiaro: il capitolo 21 usa --privileged, e i device-mapper e gli
+# array md sono GLOBALI dell'host. Per questo tutto quello che creiamo si chiama
+# lab-* e c'e' `lab-cleanup`. Gli altri capitoli locali (17-20 e 22) stanno con
+# NET_ADMIN + SYS_ADMIN e non toccano nessun dispositivo a blocchi.
 set -euo pipefail
 
 NOME=linuxlab
@@ -40,21 +41,32 @@ controlla() {
 
 # ------------------------------------------------------------------ avviso
 
+# L'avviso forte serve SOLO dove c'e' davvero qualcosa da temere: il capitolo 21.
+# Ripeterlo dappertutto lo trasforma in rumore, e il rumore si smette di leggerlo.
 avviso() {
-    cat <<'EOF'
+    if [ "$CAP" = 21 ]; then
+        cat <<'EOF'
 
   ┌──────────────────────────────────────────────────────────────────────┐
-  │  Questi capitoli girano in un container PRIVILEGIATO.                │
+  │  Il capitolo 21 gira in un container PRIVILEGIATO.                   │
   │                                                                      │
   │  Vuol dire che i loop device, i volumi LVM e gli array RAID che crei │
   │  sono visibili anche al TUO sistema: un `lsblk` sull'host li mostra. │
   │  Tutto quello che il laboratorio crea si chiama lab-*, e alla fine   │
-  │  `lab-cleanup` lo smonta e lo stacca.                                │
+  │  `lab-cleanup` lo smonta e lo stacca — dopo aver controllato che sia │
+  │  davvero roba sua.                                                   │
   │                                                                      │
   │  Se qualcosa resta appeso:  ./run.sh cleanup                         │
   └──────────────────────────────────────────────────────────────────────┘
 
 EOF
+    else
+        printf '
+  Container con NET_ADMIN e SYS_ADMIN: nessun dispositivo a blocchi toccato.
+  Alla fine:  ./run.sh cleanup
+
+'
+    fi
 }
 
 # ------------------------------------------------------------------ pulizia
@@ -88,8 +100,23 @@ pulisci() {
     #    esserci: se manca, lo si dice invece di far finta di aver pulito.
     if command -v vgs >/dev/null 2>&1; then
         if sudo vgs lab-vg >/dev/null 2>&1; then
-            sudo vgchange -an lab-vg 2>/dev/null || true
-            sudo vgremove -f lab-vg 2>/dev/null || true
+            # Il nome non basta: si guarda su quali dischi fisici poggia. Devono
+            # essere loop device agganciati ai NOSTRI file. Se anche uno solo non
+            # lo e', quel gruppo non l'abbiamo fatto noi e non lo tocchiamo.
+            nostro=si
+            for pv in $(sudo pvs --noheadings -o pv_name -S vg_name=lab-vg 2>/dev/null); do
+                case "$pv" in
+                    /dev/loop*) losetup "$pv" 2>/dev/null | grep -q '/lab-disco-' || nostro=no ;;
+                    *) nostro=no ;;
+                esac
+            done
+            if [ "$nostro" = si ]; then
+                sudo vgchange -an lab-vg 2>/dev/null || true
+                sudo vgremove -f lab-vg 2>/dev/null || true
+            else
+                rosso "c'e' un gruppo di volumi 'lab-vg' che NON poggia sui dischi del laboratorio."
+                rosso "   non lo tocco: guardalo con  sudo pvs -S vg_name=lab-vg"
+            fi
         fi
     elif sudo test -e /dev/lab-vg; then
         rosso "resta un gruppo di volumi 'lab-vg' e su questo host non c'è LVM per toglierlo."
@@ -138,7 +165,15 @@ docker image inspect "$IMG" >/dev/null 2>&1 || {
     docker build "$(dirname "$0")/.." -f "$(dirname "$0")/../Dockerfile.local" -t "$IMG"
 }
 
-docker rm -f "$NOME" >/dev/null 2>&1 || true
+# All'avvio NON si fa `docker rm -f` e basta: se si arriva dal capitolo 21 il
+# container tiene ancora montato un volume LVM e agganciati dei loop device, e
+# distruggerlo per primo e' esattamente la sequenza che `pulisci` esiste per
+# evitare. (Secondo giro di revisione, 2026-08-16: la pulizia nuova c'era e
+# l'avvio normale la scavalcava.)
+if docker ps -a --format '{{.Names}}' | grep -qx "$NOME"; then
+    giallo "c'era gia' un laboratorio acceso: lo chiudo per bene prima di ripartire."
+    pulisci
+fi
 
 # --privileged serve SOLO al capitolo 21 (LVM/RAID), che tocca dispositivi a blocchi.
 # Il 22 non ne tocca nessuno — nessun losetup, nessun lvcreate, nessun mdadm — e per

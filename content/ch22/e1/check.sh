@@ -106,10 +106,9 @@ if [ "$sonda" = si ]; then
     if [ "$p22" != silenzio ] && [ "$p80" != silenzio ] && [ "$p3306" = silenzio ]; then lab_check firewall 0
     else lab_check firewall 1 "22=$p22 80=$p80 3306=$p3306" "22 e 80 raggiungibili, 3306 nel silenzio"; fi
 else
-    lab_fact sonda "non disponibile: verificato leggendo il ruleset, non bussando"
-    if echo "$rs" | grep -A2 'chain input' | grep -q 'policy drop' \
-       && echo "$rs" | grep -qE 'dport .*22' && echo "$rs" | grep -qE 'dport .*80'; then lab_check firewall 0
-    else lab_check firewall 1 "(policy o porte mancanti)" "policy drop + 22 e 80 aperte"; fi
+    # Come al capitolo 20: niente ripiego silenzioso su una lettura del testo.
+    lab_fact sonda "NON creata: manca ip/netns o i permessi (serve --cap-add NET_ADMIN)"
+    lab_check firewall 1 "(non ho potuto bussare)" "un namespace di rete per provare le porte"
 fi
 ip netns del lab-sonda 2>/dev/null || true; ip link del lab-a 2>/dev/null || true
 

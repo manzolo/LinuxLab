@@ -52,16 +52,28 @@ export function macchinaPronta(v) { pronta = v; }
 
 export const esercizioCorrente = () => esCorrente;
 
-// Ogni apertura di esercizio prende un numero. Chi torna da un `await` e scopre
-// che nel frattempo il numero e' cambiato si ferma: non tocca la pagina e non
-// semina niente.
+// Due aperture ravvicinate — due clic, o un cambio di capitolo mentre la prima sta
+// ancora seminando — possono finire in ordine inverso: a schermo l'esercizio B, e
+// nella macchina il mondo di A. Nessuno se ne accorgerebbe finche' la verifica non
+// fallisse per una ragione inventata.
 //
-// Senza, due aperture ravvicinate — due clic, o un cambio di capitolo mentre la
-// prima sta ancora seminando — possono finire in ordine inverso: a schermo
-// l'esercizio B, e nella macchina il mondo di A. Nessuno se ne accorgerebbe
-// finche' la verifica non fallisse per una ragione inventata. (Trovato in
-// revisione il 2026-08-16; i test navigano piano e non ci passano mai.)
+// Ci vogliono DUE cose, e la prima volta ne avevo messa una sola:
+//
+//   1. le semine si mettono IN FILA. Non basta un numero di generazione: quando la
+//      semina vecchia torna, la macchina l'ha gia' modificata — il numero impedisce
+//      solo di aggiornare la pagina sbagliata, non che il mondo di A resti dentro.
+//      In fila, invece, l'ultima richiesta e' anche l'ultima a scrivere. Questo e'
+//      cio' che conta per lo STATO.
+//   2. il numero di generazione resta, ma per la PAGINA: chi torna da un `await`
+//      con il numero vecchio non tocca piu' niente a schermo.
+//
+// (La fila e' il secondo giro di revisione, 2026-08-16: «il token impedisce solo di
+// aggiornare la UI vecchia, non che A finisca dopo B». Era esatto.)
 let generazione = 0;
+let coda = Promise.resolve();
+const inFila = azione => (coda = coda.then(azione, azione));
+/** Per chi semina da fuori (il ripristino della macchina): stessa fila. */
+export const accodaSemina = azione => inFila(azione);
 
 export function disegnaEsercizi(cap) {
     capCorrente = cap;
@@ -189,11 +201,13 @@ async function apri(cap, es, box) {
     // (Segnalato da Andrea il 2026-08-16: «mi sembrano non fare niente».)
     btnVer.disabled = btnRic.disabled = btnNuo.disabled = true;
 
-    // Prepara il mondo dell'esercizio nella macchina.
-    const prepara = async (seme) => {
+    // Prepara il mondo dell'esercizio nella macchina, IN FILA con le altre semine.
+    // La fila e' la parte che protegge lo stato: l'ultima richiesta e' anche
+    // l'ultima a scrivere, qualunque cosa succeda ai tempi delle precedenti.
+    const prepara = (seme) => inFila(async () => {
         try { await preparaEsercizio(cap.id, es.id, seme); }
-        catch (e) { zona.replaceChildren(el("div", "controllo fail", e.message)); }
-    };
+        catch (e) { if (mia === generazione) zona.replaceChildren(el("div", "controllo fail", e.message)); }
+    });
     btnVer.onclick = async () => {
         btnVer.disabled = true;
         const testo = btnVer.textContent;
@@ -233,7 +247,7 @@ async function apri(cap, es, box) {
             zona.replaceChildren(el("div", "controllo fail", e.message));
         } finally { btn.disabled = false; btn.textContent = testo; }
     };
-    btnRic.onclick = () => conAttesa(btnRic, () => ricominciaEsercizio(cap.id, es.id), t("labRicomincia"));
+    btnRic.onclick = () => conAttesa(btnRic, () => inFila(() => ricominciaEsercizio(cap.id, es.id)), t("labRicomincia"));
     btnNuo.onclick = () => conAttesa(btnNuo, () => prepara(nuovoSeme(`${cap.id}.${es.id}`)), t("labNuovoMondo"));
 
     // Solo adesso, con i gestori gia' collegati, si prepara il mondo e si accendono

@@ -173,9 +173,12 @@ benissimo.
 
 ## Sicurezza e onestà
 
-Il laboratorio locale dei capitoli 21-22 gira `--privileged`. È dichiarato nel README, nel
-capitolo e in un riquadro a video prima dell'avvio. **Non toglierlo per fare pulizia:** chi
-studia deve sapere che quei volumi finiscono nel suo `lsblk`.
+Il laboratorio locale del **capitolo 21** gira `--privileged` (gli altri, 17-20 e 22, stanno
+con `NET_ADMIN` + `SYS_ADMIN` e non toccano dispositivi a blocchi). È dichiarato nel README,
+nel capitolo e in un riquadro a video prima dell'avvio. **Non togliere l'avviso per fare
+pulizia:** chi studia deve sapere che quei volumi finiscono nel suo `lsblk`. E non allargarlo
+agli altri capitoli: un avviso che compare sempre diventa rumore, e il rumore si smette di
+leggerlo proprio quando conta.
 
 Allo stesso modo, i limiti del browser (niente systemd, niente rete vera, niente più
 dispositivi a blocchi) sono **contenuto**, non scuse: spiegano cosa serve davvero a systemd

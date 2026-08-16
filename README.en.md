@@ -120,8 +120,8 @@ lab check 17 1                   # check
 ./lab/local/run.sh cleanup       # when you are done
 ```
 
-> ⚠️ Chapters 21 and 22 use a `--privileged` container, and loop devices, LVM volumes and RAID
-> arrays **are global to your computer**: an `lsblk` on the host will show them. That is why
+> ⚠️ Chapter 21 uses a `--privileged` container, and the loop devices, LVM volumes and RAID
+> arrays it creates **are global to your computer**: an `lsblk` on the host will show them. That is why
 > everything the lab creates is named `lab-*`, and `cleanup` unmounts and detaches all of it.
 > It is written in the chapter too, because it is something to know rather than hide.
 

@@ -35,7 +35,10 @@ const ko = m => { guai.push(m); console.log(`    ✗ ${m}`); };
 function avvia() {
     try { sh(`docker image inspect ${IMG}`); }
     catch { console.log("costruisco l'immagine locale…"); sh(`docker build ${ROOT}/lab -f ${ROOT}/lab/Dockerfile.local -t ${IMG}`, { stdio: "inherit" }); }
-    try { sh(`docker rm -f ${NOME}`); } catch {}
+    // Non `docker rm -f` e basta: un container rimasto da un test interrotto puo'
+    // tenere montato un volume LVM. Prima si disfa da dentro. (Secondo giro di
+    // revisione, 2026-08-16.)
+    pulisciTutto(true);
     sh(`docker run -d --name ${NOME} --cgroupns=private --privileged \
         --tmpfs /run --tmpfs /run/lock ${IMG}`);
     process.stdout.write("attendo systemd");
@@ -92,47 +95,59 @@ function provaEsercizio(cap, es) {
 
 // --------------------------------------------------------------------------
 
-const richiesti = process.argv.slice(2);
-const capitoli = (richiesti.length ? richiesti : ["ch17", "ch18", "ch19", "ch20", "ch21", "ch22"]).sort();
-
-avvia();
-// la libreria condivisa e la CLI vengono dall'overlay, gia' nell'immagine
-console.log(`provo ${capitoli.length} capitoli locali\n`);
-
-for (const cap of capitoli) {
-    const dir = path.join(ROOT, "content", cap);
-    if (!fs.existsSync(dir)) { console.log(`${cap}: assente`); continue; }
-    const esercizi = fs.readdirSync(dir).filter(d => /^e\d+$/.test(d)).sort();
-    if (!esercizi.length) { console.log(`${cap}: nessun esercizio`); continue; }
-    console.log(cap);
-    for (const es of esercizi) provaEsercizio(cap, es);
-}
-
 // La pulizia NON e' `docker rm` e basta: i volumi LVM, gli array e i loop device
 // che il capitolo 21 crea sono globali dell'host e sopravvivono al container.
 // Prima si disfa da dentro, finche' gli strumenti ci sono; poi si toglie il resto
 // dall'host e si DICE cosa e' rimasto, invece di dare per scontato che non resti
 // niente. (Trovato in revisione il 2026-08-16: il test lasciava tutto appeso.)
-console.log("\npulizia");
-try {
-    sh(`docker exec ${NOME} sh -c '
-        umount /mnt/lab 2>/dev/null || umount -l /mnt/lab 2>/dev/null
-        command -v vgchange >/dev/null && { vgchange -an lab-vg; vgremove -f lab-vg; } 2>/dev/null
-        [ -e /dev/md/lab-raid ] && mdadm --stop /dev/md/lab-raid
-        true'`);
-} catch {}
-try { sh(`docker rm -f ${NOME}`); } catch {}
-for (const md of ["/dev/md/lab-raid"]) {
-    try { sh(`test -e ${md} && sudo -n mdadm --stop $(readlink -f ${md})`); } catch {}
+//
+// E gira in un `finally` piu' un gancio sui segnali: un Ctrl-C a meta' del
+// capitolo 21 lasciava un volume montato sull'host. (Secondo giro, stesso giorno.)
+function pulisciTutto(silenzioso = false) {
+    if (!silenzioso) console.log("\npulizia");
+    try {
+        sh(`docker exec ${NOME} sh -c '
+            umount /mnt/lab 2>/dev/null || umount -l /mnt/lab 2>/dev/null
+            command -v vgchange >/dev/null && { vgchange -an lab-vg; vgremove -f lab-vg; } 2>/dev/null
+            [ -e /dev/md/lab-raid ] && mdadm --stop /dev/md/lab-raid
+            true'`);
+    } catch {}
+    try { sh(`docker rm -f ${NOME}`); } catch {}
+    try { sh(`test -e /dev/md/lab-raid && sudo -n mdadm --stop $(readlink -f /dev/md/lab-raid)`); } catch {}
+    try {
+        const appesi = execSync("losetup -a 2>/dev/null | grep '/lab-' | grep -o '^/dev/loop[0-9]*' || true",
+            { encoding: "utf8" }).trim().split("\n").filter(Boolean);
+        for (const l of appesi) { try { sh(`sudo -n losetup -d ${l}`); } catch {} }
+        const restano = execSync("losetup -a 2>/dev/null | grep -c '/lab-' || true", { encoding: "utf8" }).trim();
+        if (silenzioso) return;
+        if (restano !== "0") console.log(`  ⚠ restano ${restano} loop device del laboratorio: ./lab/local/run.sh cleanup`);
+        else console.log("  niente di nostro è rimasto sull'host");
+    } catch {}
 }
+
+const richiesti = process.argv.slice(2);
+const capitoli = (richiesti.length ? richiesti : ["ch17", "ch18", "ch19", "ch20", "ch21", "ch22"]).sort();
+
+for (const segnale of ["SIGINT", "SIGTERM"]) {
+    process.on(segnale, () => { console.log(`\n(${segnale}) pulisco prima di uscire`); pulisciTutto(); process.exit(130); });
+}
+
 try {
-    const appesi = execSync("losetup -a 2>/dev/null | grep '/lab-' | grep -o '^/dev/loop[0-9]*' || true",
-        { encoding: "utf8" }).trim().split("\n").filter(Boolean);
-    for (const l of appesi) { try { sh(`sudo -n losetup -d ${l}`); } catch {} }
-    const restano = execSync("losetup -a 2>/dev/null | grep -c '/lab-' || true", { encoding: "utf8" }).trim();
-    if (restano !== "0") console.log(`  ⚠ restano ${restano} loop device del laboratorio: ./lab/local/run.sh cleanup`);
-    else console.log("  niente di nostro è rimasto sull'host");
-} catch {}
+    avvia();
+    // la libreria condivisa e la CLI vengono dall'overlay, gia' nell'immagine
+    console.log(`provo ${capitoli.length} capitoli locali\n`);
+
+    for (const cap of capitoli) {
+        const dir = path.join(ROOT, "content", cap);
+        if (!fs.existsSync(dir)) { console.log(`${cap}: assente`); continue; }
+        const esercizi = fs.readdirSync(dir).filter(d => /^e\d+$/.test(d)).sort();
+        if (!esercizi.length) { console.log(`${cap}: nessun esercizio`); continue; }
+        console.log(cap);
+        for (const es of esercizi) provaEsercizio(cap, es);
+    }
+} finally {
+    pulisciTutto();
+}
 
 console.log(`\n${passati} asserzioni superate, ${guai.length} problemi`);
 if (guai.length) console.log("\n" + guai.map(g => "  - " + g).join("\n") + "\n");

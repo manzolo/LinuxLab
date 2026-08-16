@@ -5,7 +5,7 @@ import { get, set, progressiFatti } from "./storage.js";
 import { CAPITOLI, capitolo, primoCapitolo } from "../content/index.js";
 import { disegnaCapitolo } from "./ui/chapter.js";
 import { inizializzaEsercizi, disegnaEsercizi, macchinaPronta, esercizioCorrente,
-         azioniEsercizio, suAzioniEsercizio } from "./ui/exercises.js";
+         azioniEsercizio, suAzioniEsercizio, accodaSemina } from "./ui/exercises.js";
 import { apriSommario, apriIntro, apriQuaderno } from "./ui/overlays.js";
 import { avvia, onProgresso, reimposta, mostraPrompt } from "./lab/machine.js";
 import { attendiAgente } from "./lab/agent.js";
@@ -155,7 +155,9 @@ async function riseminaEsercizioCorrente() {
     if (!cap || !es || cap.runtime === "local") return;
     const { preparaEsercizio } = await import("./lab/runner.js");
     const { semePer } = await import("./storage.js");
-    await preparaEsercizio(cap.id, es.id, semePer(`${cap.id}.${es.id}`)).catch(() => {});
+    // In fila con le altre semine: se l'utente sta gia' cambiando esercizio mentre
+    // la macchina si ripristina, l'ultima richiesta deve restare l'ultima a scrivere.
+    await accodaSemina(() => preparaEsercizio(cap.id, es.id, semePer(`${cap.id}.${es.id}`)).catch(() => {}));
 }
 
 (async () => {

@@ -5,7 +5,9 @@ export default {
         it: "Da una macchina vuota a un server che funziona — in uno script, non a mano.",
         en: "From an empty machine to a working server — in a script, not by hand.",
     },
-    commands: ["tutto", "everything"],
+    // Niente comandi nuovi: il capstone usa quelli dei capitoli 17-21, e il quaderno
+    // non deve riempirsi delle parole "tutto" e "everything" come se fossero comandi.
+    commands: [],
     glossary: ["provisioning", "idempotente", "riproducibile"],
 
     blocks: [
@@ -32,12 +34,14 @@ export default {
                  passa. Non è una cattiveria — è esattamente quello che succede nella vita vera,
                  quando il server nuovo non è quello su cui hai provato.</p>`,
             en: `<p>This is the final exam, and it has one rule that changes everything:
-                 <strong>the check does not run on your machine</strong>. You hand in a script, and
-                 the check runs it on a <strong>clean, freshly created container</strong>, then
-                 looks at how it ended up.</p>
-                 <p>Which means exactly one thing: if you did even one step by hand, it will not
-                 pass. That is not cruelty — it is precisely what happens in real life, when the
-                 new server is not the one you practised on.</p>`,
+                 <strong>what you did by hand does not count</strong>. You hand in a script, and
+                 before running it the check <strong>undoes all six results</strong> — it deletes
+                 the user, the folder, the unit, the cron line, the firewall rules — putting the
+                 machine back into the state your script must find. Then it runs it, and looks at
+                 how it ended up.</p>
+                 <p>It is not a fresh container, and that is worth saying: from inside a container
+                 you cannot create another one. It is a <em>reset</em>, which for the purposes of
+                 the exam does the same job — whatever you had built by hand is gone.</p>`,
             cmd: "./lab/local/run.sh 22 1\ndocker exec -it linuxlab bash\n# scrivi /root/lab/provisiona.sh, poi:\nlab check 22 1",
         } },
 

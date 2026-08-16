@@ -47,7 +47,10 @@ const spanCodice = o => {
 
 // Segnaposto: parole che stanno al posto di un comando o di un nome, non comandi.
 // `cmd &` nel riepilogo del capitolo 11 vuol dire "un comando qualsiasi, e poi &".
-const SEGNAPOSTO = new Set(["cmd", "comando", "command", "nome", "name", "file",
+// NB: `file` NON sta qui, per quanto sia un segnaposto frequente: e' anche un
+// comando vero, insegnato al capitolo 4. Metterlo nell'elenco lo renderebbe
+// invisibile all'audit per sempre. (Secondo giro di revisione, 2026-08-16.)
+const SEGNAPOSTO = new Set(["cmd", "comando", "command", "nome", "name",
                             "percorso", "path", "cartella", "utente", "user", "x", "n"]);
 
 /** I token di comando e gli operatori contenuti in una riga di shell. */

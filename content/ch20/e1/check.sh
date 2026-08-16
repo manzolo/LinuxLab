@@ -53,15 +53,14 @@ if [ "$sonda" = sì ]; then
     if [ "$p3306" = silenzio ]; then lab_check 3306-chiusa 0
     else lab_check 3306-chiusa 1 "3306=$p3306" "silenzio: la 3306 non deve arrivare da nessuna parte"; fi
 else
-    # Senza namespace non si può bussare: si ripiega sulla lettura del ruleset e
-    # LO SI DICE, invece di far passare una verifica più debole per quella vera.
-    lab_fact sonda "non disponibile: verificato leggendo il ruleset, non bussando"
-    if echo "$rs" | grep -qE 'dport .*22' && echo "$rs" | grep -qE 'dport .*80'; then lab_check 22-e-80-aperte 0
-    else lab_check 22-e-80-aperte 1 "(manca una delle due)" "accept su dport 22 e 80"; fi
-    if echo "$rs" | grep -qE 'dport .*3306'; then
-        lab_check 3306-chiusa 1 "c'è una regola che apre la 3306" "nessuna regola per la 3306"
-    elif echo "$rs" | grep -A2 'chain input' | grep -q 'policy drop'; then lab_check 3306-chiusa 0
-    else lab_check 3306-chiusa 1 "senza policy drop la 3306 passa comunque" "policy drop"; fi
+    # Senza sonda NON si ripiega su una lettura del testo: la consegna promette che
+    # le porte vengono provate, e una verifica più debole spacciata per quella vera
+    # è peggio di una verifica che fallisce. Quindi fallisce, e dice perché.
+    # (Secondo giro di revisione, 2026-08-16: il ripiego silenzioso faceva passare
+    # anche una regola generica `tcp accept`.)
+    lab_fact sonda "NON creata: manca ip/netns o i permessi (serve --cap-add NET_ADMIN)"
+    lab_check 22-e-80-aperte 1 "(non ho potuto bussare)" "un namespace di rete per provare le porte"
+    lab_check 3306-chiusa 1 "(non ho potuto bussare)" "un namespace di rete per provare le porte"
 fi
 
 ip netns del lab-sonda 2>/dev/null || true

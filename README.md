@@ -121,8 +121,8 @@ lab check 17 1                   # verifica
 ./lab/local/run.sh cleanup       # quando hai finito
 ```
 
-> ⚠️ I capitoli 21 e 22 usano un container `--privileged`, e i loop device, i volumi LVM e
-> gli array RAID **sono globali del tuo computer**: un `lsblk` sull'host li mostra. Per questo
+> ⚠️ Il capitolo 21 usa un container `--privileged`, e i loop device, i volumi LVM e
+> gli array RAID che crea **sono globali del tuo computer**: un `lsblk` sull'host li mostra. Per questo
 > tutto quello che il laboratorio crea si chiama `lab-*`, e `cleanup` smonta e stacca ogni
 > cosa. È scritto anche nel capitolo, perché è una cosa che va saputa e non nascosta.
 
