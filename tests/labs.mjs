@@ -54,12 +54,18 @@ emulatore.add_listener("serial1-output-byte", b => {
     }
 });
 
+// I tempi sono tarati sul runner della CI, non sul PC di casa: li' l'emulatore va
+// diverse volte piu' lento, e un timeout stretto trasforma "lento" in "rotto".
+const TIMEOUT = +(process.env.TIMEOUT_LAB || 120000);
+
 function chiedi(op, ...arg) {
     const id = prossimo++;
     return new Promise((res, rej) => {
         attesa.set(id, res);
         emulatore.serial_send_bytes(1, new TextEncoder().encode(`${id} ${op} ${arg.join(" ")}\n`));
-        setTimeout(() => { if (attesa.delete(id)) rej(new Error(`timeout su ${op}`)); }, 40000);
+        setTimeout(() => {
+            if (attesa.delete(id)) rej(new Error(`la macchina non ha risposto a "${op}" entro ${TIMEOUT / 1000}s`));
+        }, TIMEOUT);
     });
 }
 const b64 = s => Buffer.from(s, "utf8").toString("base64");
@@ -140,7 +146,16 @@ for (const cap of capitoli) {
     const esercizi = fs.readdirSync(dirCap).filter(d => /^e\d+$/.test(d)).sort();
     if (!esercizi.length) { console.log(`${cap}: nessun esercizio eseguibile (capitolo locale o solo lettura)`); continue; }
     console.log(`${cap}`);
-    for (const es of esercizi) await provaEsercizio(cap, es);
+    for (const es of esercizi) {
+        // Un esercizio che va in timeout viene segnalato e si passa oltre: far
+        // cadere tutta la corsa nasconde gli altri 59 risultati.
+        try { await provaEsercizio(cap, es); }
+        catch (e) { ko(`${cap}.${es}: ${e.message}`); }
+    }
+    // Fra un capitolo e l'altro si liberano le cache del guest: i capitoli sui
+    // dischi e sui pacchetti lasciano parecchio in memoria, e con 128 MB la
+    // macchina rallenta fino a sembrare rotta.
+    await chiedi("sh", "sync; echo 3 > /proc/sys/vm/drop_caches").catch(() => {});
 }
 
 console.log(`\n${passati} asserzioni superate, ${guai.length} problemi`);
