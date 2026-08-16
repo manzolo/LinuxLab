@@ -34,19 +34,20 @@ const em = new V86({
 });
 
 // --- canale di verifica (per seminare come farebbe il sito) ---
-let buf1 = "", next = 1; const attesa = new Map();
+let buf1 = "", next = 1; const attesa = new Map(); const malformate = [];
 em.add_listener("serial1-output-byte", b => {
     buf1 += String.fromCharCode(b); let i;
     while ((i = buf1.indexOf("\n")) >= 0) {
         const r = buf1.slice(0, i).trim(); buf1 = buf1.slice(i + 1);
-        if (!r) continue; let m; try { m = JSON.parse(r); } catch { continue; }
+        if (!r) continue; let m;
+        try { m = JSON.parse(r); } catch { malformate.push(r.slice(0, 160)); continue; }
         const f = attesa.get(m.id); if (f) { attesa.delete(m.id); f(m); }
     }
 });
 const agente = (op, ...a) => { const id = next++; return new Promise((res, rej) => {
     attesa.set(id, res);
     em.serial_send_bytes(1, new TextEncoder().encode(`${id} ${op} ${a.join(" ")}\n`));
-    setTimeout(() => { if (attesa.delete(id)) rej(new Error("timeout " + op)); }, 30000); }); };
+    setTimeout(() => { if (attesa.delete(id)) rej(new Error("timeout " + op + (malformate.length ? " — risposta illeggibile: " + malformate[malformate.length - 1] : ""))); }, 30000); }); };
 
 // --- terminale dell'utente ---
 let s0 = "";

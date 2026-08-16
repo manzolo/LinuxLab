@@ -6,10 +6,14 @@
 
 import { macchina } from "./machine.js";
 
-const TIMEOUT = { check: 15000, seed: 30000, sh: 30000, ping: 5000, write: 15000, reset: 30000, solve: 30000 };
+// Tempi generosi: su un portatile lento l'emulatore va parecchie volte piu' piano
+// del mio, e un timeout stretto trasforma "lento" in "rotto" agli occhi di chi
+// studia. L'agente ha comunque un cane da guardia suo (90s) che risponde sempre.
+const TIMEOUT = { check: 45000, seed: 60000, sh: 45000, ping: 10000, write: 30000, reset: 60000, solve: 60000 };
 
 let inizializzato = false;
 let buffer = "";
+let ultimaMalformata = null;
 let prossimoId = 1;
 const inAttesa = new Map();
 let prontoResolve;
@@ -26,7 +30,15 @@ function inizializza() {
             buffer = buffer.slice(i + 1);
             if (!riga) continue;
             let msg;
-            try { msg = JSON.parse(riga); } catch { continue; }
+            try { msg = JSON.parse(riga); }
+            catch {
+                // Una risposta illeggibile non deve sparire in silenzio: senza questa
+                // traccia la richiesta resta appesa fino al timeout e non si capisce
+                // perche'. (Costato un pomeriggio: una tabulazione dentro il JSON.)
+                ultimaMalformata = riga.slice(0, 200);
+                console.warn("risposta non interpretabile dal canale di verifica:", ultimaMalformata);
+                continue;
+            }
             if (msg.ev === "ready") { prontoResolve(msg.v); continue; }
             const r = inAttesa.get(msg.id);
             // Le risposte con id diverso da quello atteso si scartano: protegge
@@ -48,7 +60,7 @@ function chiedi(op, ...arg) {
         inAttesa.set(id, res);
         macchina().serial_send_bytes(1, new TextEncoder().encode(riga));
         setTimeout(() => {
-            if (inAttesa.delete(id)) rej(new Error(`la verifica non ha risposto (${op})`));
+            if (inAttesa.delete(id)) rej(new Error(`la verifica non ha risposto (${op})` + (ultimaMalformata ? ` — ultima risposta illeggibile: ${ultimaMalformata}` : "")));
         }, ms);
     });
 }

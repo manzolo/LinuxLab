@@ -18,12 +18,22 @@ LAB=/root/lab
 mkdir -p "$STATE"
 stty -F "$DEV" 115200 raw -echo 2>/dev/null
 
-# escaping JSON: barre, virgolette, caratteri di controllo, a capo; poi tronca
+# Escaping JSON. Tre trappole, tutte pagate sul campo:
+#  1. una TABULAZIONE letterale dentro una stringa JSON e' NON VALIDA. Il crontab
+#     di default di Alpine e' scritto con i tab: bastava leggerlo perche' la
+#     risposta diventasse impossibile da interpretare, la riga venisse scartata in
+#     silenzio e la richiesta restasse appesa fino al timeout. (Successo davvero:
+#     l'ha causato la riga di diagnostica aggiunta per capire un altro guasto.)
+#  2. troncare DOPO aver sfuggito puo' tagliare a meta' una sequenza \n e lasciare
+#     una barra sola in fondo: altra stringa non valida. Si tronca prima, sul grezzo.
+#  3. un byte UTF-8 spezzato dal troncamento fa lo stesso danno: si tiene solo
+#     ASCII stampabile. Sono messaggi di diagnostica, non prosa.
 _esc() {
-    sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' \
-        | tr -d '\000-\010\013\014\016-\037' \
-        | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g' \
-        | cut -c1-4096
+    head -c 3000 \
+        | tr -cd '\11\12\40-\176' \
+        | tr '\11' ' ' \
+        | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' \
+        | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g'
 }
 
 reply() { # reply <id> <code> <out>
@@ -38,8 +48,24 @@ run_lab() { # run_lab <script>
     # HOME va impostato esplicitamente: labagentd nasce da init e non lo eredita.
     # Senza, uno script dell'utente che scrive in ~/lab finisce in /lab e fallisce
     # solo durante la verifica — un modo perfetto per impazzire.
-    HOME=/root EDU_SEED="$(cat "$STATE/seed" 2>/dev/null || echo 1)" LAB="$LAB" \
-        sh -c ". $LIB; . '$1'" 2>&1
+    # </dev/null NON e' un dettaglio: il ciclo di questo agente legge da /dev/ttyS1,
+    # e senza redirezione ogni script erediterebbe QUELLA seriale come stdin. Basta
+    # un comando che legga stdin per divorare la riga di controllo successiva:
+    # l'agente resta in attesa di qualcosa che e' gia' stato mangiato, e la verifica
+    # va in timeout senza un motivo visibile. (E' successo: ch14.e2 in CI.)
+    # `timeout` non e' pignoleria: se uno script si blocca (e uno script scritto da
+    # chi studia PUO' bloccarsi) senza cane da guardia l'agente resta muto per
+    # sempre, la verifica va in timeout lato browser e il laboratorio sembra morto
+    # senza dire perche'. Cosi' invece risponde, e dice cosa e' successo.
+    out=$(HOME=/root EDU_SEED="$(cat "$STATE/seed" 2>/dev/null || echo 1)" LAB="$LAB" \
+        timeout "${LAB_TIMEOUT:-90}" sh -c ". $LIB; . '$1'" </dev/null 2>&1)
+    rc=$?
+    printf '%s' "$out"
+    if [ "$rc" -eq 124 ] || [ "$rc" -eq 143 ]; then
+        printf '\nEDU CHECK watchdog FAIL got=bloccato want=uno script che termina\n'
+        printf 'EDU RESULT 0/1\n'
+    fi
+    return $rc
 }
 
 printf '{"ev":"ready","v":1}\n' > "$DEV"
@@ -101,7 +127,7 @@ while IFS= read -r line; do
             rc=$?; chmod "$m" "$p" 2>/dev/null; reply "$id" $rc ""
             ;;
         sh)
-            out=$(cd "$LAB" 2>/dev/null; HOME=/root sh -c "$*" 2>&1); reply "$id" $? "$out"
+            out=$(cd "$LAB" 2>/dev/null; HOME=/root sh -c "$*" </dev/null 2>&1); reply "$id" $? "$out"
             ;;
         *)
             reply "$id" 127 "operazione sconosciuta: $op"

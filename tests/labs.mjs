@@ -42,6 +42,7 @@ const emulatore = new V86({
 });
 
 let buf = "", prossimo = 1;
+const malformate = [];   // risposte che non si riesce a interpretare
 const attesa = new Map();
 emulatore.add_listener("serial1-output-byte", b => {
     buf += String.fromCharCode(b);
@@ -49,7 +50,8 @@ emulatore.add_listener("serial1-output-byte", b => {
     while ((i = buf.indexOf("\n")) >= 0) {
         const riga = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
         if (!riga) continue;
-        let m; try { m = JSON.parse(riga); } catch { continue; }
+        let m;
+        try { m = JSON.parse(riga); } catch { malformate.push(riga.slice(0, 160)); continue; }
         const r = attesa.get(m.id); if (r) { attesa.delete(m.id); r(m); }
     }
 });
@@ -64,7 +66,7 @@ function chiedi(op, ...arg) {
         attesa.set(id, res);
         emulatore.serial_send_bytes(1, new TextEncoder().encode(`${id} ${op} ${arg.join(" ")}\n`));
         setTimeout(() => {
-            if (attesa.delete(id)) rej(new Error(`la macchina non ha risposto a "${op}" entro ${TIMEOUT / 1000}s`));
+            if (attesa.delete(id)) rej(new Error(`la macchina non ha risposto a "${op}" entro ${TIMEOUT / 1000}s` + (malformate.length ? " — risposta illeggibile: " + malformate[malformate.length - 1] : "")));
         }, TIMEOUT);
     });
 }
