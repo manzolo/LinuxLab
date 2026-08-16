@@ -20,9 +20,14 @@ export default {
 
         { kind: "local", html: {
             it: `<p>Questo è l'esame finale, e ha una regola che cambia tutto:
-                 <strong>la verifica non gira sulla tua macchina</strong>. Consegni uno script,
-                 e il controllo lo esegue su un <strong>container pulito, appena creato</strong>,
-                 e poi guarda com'è finito.</p>
+                 <strong>quello che hai fatto a mano non conta</strong>. Consegni uno script, e
+                 prima di eseguirlo il controllo <strong>disfa tutti e sei i risultati</strong> —
+                 cancella l'utente, la cartella, la unit, la riga di cron, le regole del
+                 firewall — e riporta la macchina allo stato in cui il tuo script deve trovarla.
+                 Poi lo esegue, e guarda com'è finita.</p>
+                 <p>Non è un container nuovo, ed è giusto dirlo: da dentro un container non se ne
+                 crea un altro. È un <em>azzeramento</em>, che ai fini dell'esame fa lo stesso
+                 lavoro — quello che avevi costruito a mano non c'è più.</p>
                  <p>Che significa una cosa sola: se hai fatto anche un solo passaggio a mano, non
                  passa. Non è una cattiveria — è esattamente quello che succede nella vita vera,
                  quando il server nuovo non è quello su cui hai provato.</p>`,
@@ -92,8 +97,8 @@ export default {
                  exist.</p>` } },
 
         { kind: "pitfalls", items: [
-            { it: "<strong>Provarlo solo sulla macchina dove hai già fatto metà del lavoro a mano</strong> è il modo classico di consegnare uno script che non funziona. Provalo su un container nuovo — che è esattamente quello che fa la verifica.",
-              en: "<strong>Testing it only on the machine where you already did half the work by hand</strong> is the classic way to hand in a script that does not work. Test it on a fresh container — which is exactly what the check does." },
+            { it: "<strong>Provarlo solo sulla macchina dove hai già fatto metà del lavoro a mano</strong> è il modo classico di consegnare uno script che non funziona: funziona perché il lavoro era già fatto. Provalo su un container nuovo, che è la prova più severa di quella della verifica.",
+              en: "<strong>Testing it only on the machine where you already did half the work by hand</strong> is the classic way to hand in a script that does not work: it works because the work was already done. Test it on a fresh container, which is a harsher test than the check's own." },
             { it: "<strong>Uno script che non è idempotente è una trappola a scoppio ritardato</strong>: la seconda esecuzione duplica righe di configurazione o fallisce su un utente che esiste già.",
               en: "<strong>A non-idempotent script is a delayed-action trap</strong>: the second run duplicates configuration lines or fails on a user that already exists." },
             { it: "<strong>Non mettere segreti nello script.</strong> Password e chiavi private non vanno in un file che finisce in git. Il capitolo non te lo chiede, e non è un caso.",
@@ -117,8 +122,8 @@ export default {
                            <code>/usr/local/bin/backup.sh</code>, e lo script esiste ed è eseguibile;</li>
                        <li>il firewall <code>inet lab</code> con policy drop e aperte solo 22 e 80.</li>
                      </ol>
-                     <strong>La verifica esegue il tuo script su un container nuovo e poi controlla
-                     tutti e sei i punti.</strong>`,
+                     <strong>La verifica azzera tutti e sei i risultati, poi esegue il tuo script
+                     — due volte, per vedere se regge anche la seconda — e controlla.</strong>`,
                 en: `Write <code>/root/lab/provisiona.sh</code>. Run on a clean machine, it must
                      achieve <strong>all</strong> of these:
                      <ol>
@@ -132,8 +137,8 @@ export default {
                            is executable;</li>
                        <li>the <code>inet lab</code> firewall with a drop policy, only 22 and 80 open.</li>
                      </ol>
-                     <strong>The check runs your script on a fresh container and then verifies all
-                     six points.</strong>`,
+                     <strong>The check undoes all six results, then runs your script — twice, to
+                     see whether it survives the second time — and verifies.</strong>`,
             },
             checks: [
                 { id: "utente", why: { it: "Capitolo 7: ogni servizio il suo utente, e senza shell se non deve entrare nessuno.", en: "Chapter 7: every service its own user, and no shell if nobody needs to log in." },
@@ -157,7 +162,7 @@ export default {
             hints: [
                 { it: "Non partire dal foglio bianco: apri i capitoli 6, 7, 14, 17, 19 e 20 e copia il comando che avevi già usato in ognuno.", en: "Do not start from a blank page: open chapters 6, 7, 14, 17, 19 and 20 and copy the command you already used in each." },
                 { it: "Comincia con <code>#!/bin/bash</code> e <code>set -euo pipefail</code>. Poi un blocco per punto, in ordine, con un <code>echo</code> fra uno e l'altro per sapere dove si ferma.", en: "Start with <code>#!/bin/bash</code> and <code>set -euo pipefail</code>. Then one block per point, in order, with an <code>echo</code> between them so you know where it stops." },
-                { it: "Provalo tu su un container pulito prima di consegnarlo: <code>./lab/local/run.sh cleanup &amp;&amp; ./lab/local/run.sh 22 1</code>. È esattamente quello che farà la verifica.", en: "Test it yourself on a clean container before handing it in: <code>./lab/local/run.sh cleanup &amp;&amp; ./lab/local/run.sh 22 1</code>. That is exactly what the check will do." },
+                { it: "Provalo tu su un container pulito prima di consegnarlo: <code>./lab/local/run.sh cleanup &amp;&amp; ./lab/local/run.sh 22 1</code>. È una prova più severa dell'azzeramento che fa la verifica, e se passa quella passi di sicuro.", en: "Test it yourself on a clean container before handing it in: <code>./lab/local/run.sh cleanup &amp;&amp; ./lab/local/run.sh 22 1</code>. That is a harsher test than the check's reset, and if you pass it you pass for sure." },
             ],
         },
     ],

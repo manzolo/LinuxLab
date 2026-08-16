@@ -180,6 +180,11 @@ export default {
                          en: "It is the part almost everyone forgets, and it is what makes the script usable by cron or another script: failing <em>out loud</em>." },
                   nudge: { it: "<code>./salva.sh /non-esiste; echo $?</code> deve stampare <code>1</code>. Si ottiene con <code>exit 1</code> dentro un <code>if</code>.",
                            en: "<code>./salva.sh /nowhere; echo $?</code> must print <code>1</code>. You get it with <code>exit 1</code> inside an <code>if</code>." } },
+                { id: "dice-perche",
+                  why: { it: "Il codice di uscita dice <em>che</em> è andata male; il messaggio dice <em>perché</em>. E va su <strong>stderr</strong>, non su stdout: così chi ti mette in una pipe riceve dati puliti e vede lo stesso l'errore.",
+                         en: "The exit code says <em>that</em> it went wrong; the message says <em>why</em>. And it goes to <strong>stderr</strong>, not stdout: that way whoever puts you in a pipe gets clean data and still sees the error." },
+                  nudge: { it: "<code>./salva.sh /non-esiste 2&gt;&amp;1 &gt;/dev/null</code> butta via stdout e lascia passare solo stderr: lì deve comparire qualcosa.",
+                           en: "<code>./salva.sh /nowhere 2&gt;&amp;1 &gt;/dev/null</code> throws stdout away and lets only stderr through: something must show up there." } },
             ],
             hints: [
                 { it: "Per controllare se una cartella esiste: <code>if [ ! -d \"$1\" ]; then … fi</code>.", en: "To check a directory exists: <code>if [ ! -d \"$1\" ]; then … fi</code>." },

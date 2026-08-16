@@ -113,21 +113,30 @@ export default {
             id: "e1", tipo: "stato",
             brief: {
                 it: `Salva l'elenco dei file di <code>~/lab</code> in <code>~/lab/elenco.txt</code>
-                     <strong>e</strong> fallo comparire anche a schermo, con un comando solo.`,
+                     <strong>e</strong>, dallo stesso flusso, scrivi in <code>~/lab/conteggio.txt</code>
+                     quante righe sono. Con <code>&gt;</code> non ci arrivi: quello che dirotti in un
+                     file non prosegue. Qui serve una <strong>derivazione</strong>.`,
                 en: `Save the list of files in <code>~/lab</code> into <code>~/lab/elenco.txt</code>
-                     <strong>and</strong> show it on screen too, with a single command.`,
+                     <strong>and</strong>, from the same stream, write into <code>~/lab/conteggio.txt</code>
+                     how many lines that is. <code>&gt;</code> will not get you there: what you divert
+                     into a file does not carry on. Here you need a <strong>T-junction</strong>.`,
             },
             checks: [
                 { id: "elenco-salvato",
-                  why: { it: "<code>&gt;</code> e <code>tee</code> non sono intercambiabili: il primo dirotta, il secondo duplica. Quando un comando ci mette dieci minuti, vuoi vedere che sta succedendo <em>mentre</em> salvi.",
-                         en: "<code>&gt;</code> and <code>tee</code> are not interchangeable: the first diverts, the second duplicates. When a command takes ten minutes, you want to see what is happening <em>while</em> you save." },
+                  why: { it: "<code>&gt;</code> e <code>tee</code> non sono intercambiabili: il primo <strong>dirotta</strong>, il secondo <strong>duplica</strong>. Quando un comando ci mette dieci minuti, vuoi vedere che sta succedendo <em>mentre</em> salvi.",
+                         en: "<code>&gt;</code> and <code>tee</code> are not interchangeable: the first <strong>diverts</strong>, the second <strong>duplicates</strong>. When a command takes ten minutes, you want to see what is happening <em>while</em> you save." },
                   nudge: { it: "<code>cat ~/lab/elenco.txt</code>: se il file è vuoto o non c'è, la redirezione non è arrivata dove pensavi.",
                            en: "<code>cat ~/lab/elenco.txt</code>: if the file is empty or missing, the redirection did not land where you thought." } },
+                { id: "conteggio-coerente",
+                  why: { it: "È questa la prova che il flusso è <em>proseguito</em> dopo essere stato salvato: se si fosse fermato al file, il conteggio non esisterebbe. Un solo passaggio sui dati, due destinazioni.",
+                         en: "This is the proof that the stream <em>carried on</em> after being saved: had it stopped at the file, the count would not exist. One pass over the data, two destinations." },
+                  nudge: { it: "<code>wc -l &lt; ~/lab/elenco.txt; cat ~/lab/conteggio.txt</code>: i due numeri devono coincidere.",
+                           en: "<code>wc -l &lt; ~/lab/elenco.txt; cat ~/lab/conteggio.txt</code>: the two numbers must match." } },
             ],
             hints: [
-                { it: "Il comando che scrive su file e lascia passare si chiama <code>tee</code>.", en: "The command that writes to a file and passes data through is called <code>tee</code>." },
-                { it: "Va messo dopo una pipe: <code>ls | tee …</code>.", en: "It goes after a pipe: <code>ls | tee …</code>." },
-                { it: "<code>cd ~/lab &amp;&amp; ls | tee elenco.txt</code>", en: "<code>cd ~/lab &amp;&amp; ls | tee elenco.txt</code>" },
+                { it: "Il comando che scrive su file <em>e lascia passare</em> si chiama <code>tee</code> — come il raccordo a T dell'idraulica.", en: "The command that writes to a file <em>and lets data through</em> is called <code>tee</code> — like the plumber's T-junction." },
+                { it: "Va messo in mezzo, non in fondo: <code>ls | tee elenco.txt | …</code>. Quello che viene dopo riceve tutto lo stesso.", en: "It goes in the middle, not at the end: <code>ls | tee elenco.txt | …</code>. Whatever comes after receives everything all the same." },
+                { it: "<code>cd ~/lab &amp;&amp; ls | tee elenco.txt | wc -l &gt; conteggio.txt</code>", en: "<code>cd ~/lab &amp;&amp; ls | tee elenco.txt | wc -l &gt; conteggio.txt</code>" },
             ],
         },
         {

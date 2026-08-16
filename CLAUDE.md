@@ -76,6 +76,17 @@ Quando il comando è **materia di questo capitolo** la risposta giusta non è di
 insegnarlo: riga nel blocco `shown`, riga nel `recap`, voce in `commands` (è stato il caso di
 `addgroup` nel capitolo 7).
 
+**Un check deve misurare tutto quello che la consegna promette — e niente di più.**
+Il verso pericoloso è la promessa non mantenuta: una consegna che dice *«la verifica prova
+anche la 3306»* e un check che invece cerca una stringa in `nft list ruleset` è una bugia
+detta a chi sta imparando, e passa una regola generica `tcp accept` che lascia la macchina
+spalancata. Dove si può, **si prova invece di leggere**: il capitolo 20 e il capstone creano
+un namespace di rete con un cavo virtuale e *bussano* alle porte, distinguendo il rifiuto
+(RST immediato) dal silenzio (DROP, tre secondi di niente) — che è poi il mestiere. Dove
+davvero non si può, il check lo **dichiara nei fatti** (`lab_fact sonda "non disponibile: …"`)
+invece di far passare la misura debole per quella vera. Il `cheat.sh` dimostra che *quel*
+trucco fallisce, non che il check regga: non è una garanzia di copertura.
+
 **Asserire l'invariante, mai la forma del comando.** `chmod 644` e `chmod u=rw,go=r` sono lo
 stesso fatto: il check guarda i bit. Il cron delle 3:30 si verifica sui campi minuto/ora, non
 sulla stringa. La regola pratica: *se un `check.sh` contiene un `grep` sul comando
@@ -114,6 +125,27 @@ un capitolo a metà senza rompere niente.**
 
 `test:labs` esegue le cinque asserzioni della collana su ogni esercizio: lo stato iniziale
 non passa già · la soluzione passa su **tre semi diversi** · il `cheat.sh` **fallisce**.
+
+## La pulizia del laboratorio locale (leggere prima di toccarla)
+
+Dal capitolo 21 il container lavora su **oggetti globali dell'host**: volumi LVM, array md,
+loop device. La pulizia è la parte più pericolosa di tutto il progetto, e ha una regola sola:
+**si tocca solo quello che porta il nostro nome, e lo si verifica prima di toccarlo.**
+
+Cosa era sbagliato nella prima versione (revisione esterna del 2026-08-16):
+
+- fermava ogni `/dev/md12*` — che comprende **`/dev/md127`**, il nome che il kernel assegna da
+  solo agli array assemblati all'avvio: array *veri* di chi sta studiando;
+- eliminava il container **prima** di usare gli strumenti che stanno dentro, e poi si affidava
+  al `vgchange` dell'host, che su una macchina senza `lvm2` non esiste;
+- non smontava niente, e `vgremove -f` su un volume ancora montato non è una pulizia;
+- `tests/labs-local.mjs` finiva con `docker rm -f` e basta, lasciando VG e loop appesi.
+
+Adesso: prima si disfa **da dentro** il container, poi si toccano sull'host solo gli oggetti
+il cui nome è stato riletto dal kernel (`mdadm --detail`, il file dietro il loop device), e
+alla fine si **dice cosa è rimasto** invece di stampare "fatto". E `--privileged` lo ha solo
+il capitolo 21, che tocca dispositivi a blocchi: il 22 non ne tocca nessuno e ne faceva a meno
+benissimo.
 
 ## Trappole già scoperte (non ripercorrerle)
 

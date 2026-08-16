@@ -1,1 +1,1 @@
-cd "$LAB" && ls | tee elenco.txt > /dev/null
+cd "$LAB" && ls | tee elenco.txt | wc -l > conteggio.txt

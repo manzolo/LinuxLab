@@ -45,6 +45,11 @@ const spanCodice = o => {
     return [...s.matchAll(/<code>([\s\S]*?)<\/code>/g)].map(m => decodifica(m[1]));
 };
 
+// Segnaposto: parole che stanno al posto di un comando o di un nome, non comandi.
+// `cmd &` nel riepilogo del capitolo 11 vuol dire "un comando qualsiasi, e poi &".
+const SEGNAPOSTO = new Set(["cmd", "comando", "command", "nome", "name", "file",
+                            "percorso", "path", "cartella", "utente", "user", "x", "n"]);
+
 /** I token di comando e gli operatori contenuti in una riga di shell. */
 export function tokenDi(riga) {
     const fuori = new Set();
@@ -56,7 +61,7 @@ export function tokenDi(riga) {
     for (const seg of s.split(/\|\||&&|\||;|\$\(|\s\/\s/)) {
         let w = seg.trim().split(/\s+/)[0] || "";
         w = w.replace(/^\.\//, "").replace(/^['"]/, "");
-        if (/^[a-z][a-z0-9._-]*$/i.test(w)) fuori.add(w);
+        if (/^[a-z][a-z0-9._-]*$/i.test(w) && !SEGNAPOSTO.has(w.toLowerCase())) fuori.add(w);
     }
     return fuori;
 }
@@ -94,6 +99,11 @@ export function richiestiDa(es) {
     };
     raccogli(es.brief, "consegna");
     (es.hints || []).forEach((h, i) => raccogli(h, `suggerimento ${i + 1}`));
+    // Anche i `nudge`: sono i comandi di diagnosi che compaiono quando la verifica
+    // fallisce, ed e' il momento in cui chi studia e' piu' disposto a fidarsi. Un
+    // comando suggerito li' e mai spiegato e' un vicolo cieco nel punto peggiore.
+    // (Segnalato in revisione il 2026-08-16.)
+    (es.checks || []).forEach(c => raccogli(c.nudge, `diagnosi di ${c.id}`));
     return fuori;
 }
 

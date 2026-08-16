@@ -4,7 +4,8 @@ import { initLang, setLang, getLang, onLangChange, refreshStatic, t } from "./i1
 import { get, set, progressiFatti } from "./storage.js";
 import { CAPITOLI, capitolo, primoCapitolo } from "../content/index.js";
 import { disegnaCapitolo } from "./ui/chapter.js";
-import { inizializzaEsercizi, disegnaEsercizi, macchinaPronta, esercizioCorrente } from "./ui/exercises.js";
+import { inizializzaEsercizi, disegnaEsercizi, macchinaPronta, esercizioCorrente,
+         azioniEsercizio, suAzioniEsercizio } from "./ui/exercises.js";
 import { apriSommario, apriIntro, apriQuaderno } from "./ui/overlays.js";
 import { avvia, onProgresso, reimposta, mostraPrompt } from "./lab/machine.js";
 import { attendiAgente } from "./lab/agent.js";
@@ -122,6 +123,18 @@ $("btnReimposta").onclick = async () => {
         stato.textContent = t("labPronta");
     }
 };
+
+// I due gemelli di "Nuovo mondo" e "Ricomincia l'esercizio" che stanno qui, accanto
+// a "Reimposta la macchina". Erano in pagina dal primo giorno SENZA GESTORE: si
+// premevano e non succedeva niente. Adesso premono gli stessi bottoni della barra
+// dell'esercizio (una sola logica) e restano spenti quando non c'e' un esercizio
+// aperto, invece di sembrare disponibili e non esserlo.
+suAzioniEsercizio(a => {
+    $("btnNuovoMondo").disabled = !a;
+    $("btnRicomincia").disabled = !a;
+});
+$("btnNuovoMondo").onclick = () => azioniEsercizio()?.nuovoMondo();
+$("btnRicomincia").onclick = () => azioniEsercizio()?.ricomincia();
 
 // Su telefono il terminale c'e' ma non e' praticabile: meglio dirlo che fingere.
 const soloTocco = matchMedia("(pointer: coarse)").matches && innerWidth < 900;

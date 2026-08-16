@@ -161,6 +161,9 @@ export default {
                      The check looks at the bytes: one extra newline shows up.`,
             },
             attrezzi: [
+                { cmd: "wc -c", cap: 4, cosa: {
+                    it: "conta i <strong>byte</strong> di un file (con <code>-l</code> conta invece le righe). Serve se la verifica non passa: è il modo di vedere l'a-capo che non si vede — un carattere invisibile che occupa spazio come tutti gli altri.",
+                    en: "counts a file's <strong>bytes</strong> (with <code>-l</code> it counts lines instead). You need it if the check fails: it is how you see the newline you cannot see — an invisible character that takes up room like any other." } },
                 { cmd: "> file", cap: 8, cosa: {
                     it: "manda l'uscita di un comando <strong>dentro un file</strong> invece che a schermo. Se il file non c'è lo crea, se c'è lo sovrascrive senza chiedere. È il modo normale di creare un file di testo dal terminale.",
                     en: "sends a command's output <strong>into a file</strong> instead of to the screen. If the file does not exist it is created; if it does, it is overwritten without asking. This is the ordinary way to create a text file from the terminal." } },

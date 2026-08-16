@@ -113,10 +113,29 @@ const clicca = async (sel) => val(`(() => {
             : ko("la rotellina non scorre il capitolo: qualcuno annulla l'evento wheel");
 }
 
-// ---- Nuovo mondo -----------------------------------------------------------
+// ---- nessun pulsante morto in pagina ---------------------------------------
+// La regola generale invece del caso singolo: un pulsante che si vede e si puo'
+// premere DEVE avere un gestore, suo o di un antenato (i due switch lingua e
+// profondita' usano la delega sul contenitore, ed e' legittimo).
+//
+// Questo controllo nasce da un buco di questo file stesso: provava i pulsanti
+// DENTRO l'esercizio e non i due gemelli nell'intestazione, che erano in pagina
+// dal primo giorno senza alcun gestore. Due bottoni con la stessa etichetta, uno
+// vivo e uno morto, e il test verde. (Revisione esterna del 2026-08-16.)
+{
+    const morti = await val(`(() => {
+        const conGestore = b => { for (let n = b; n; n = n.parentElement) if (n.onclick) return true; return false; };
+        return [...document.querySelectorAll('button')]
+            .filter(b => b.offsetParent !== null && !conGestore(b))
+            .map(b => b.id || '«' + b.textContent.trim().slice(0, 24) + '»').join(', ');
+    })()`);
+    morti ? ko(`pulsanti visibili senza gestore: ${morti}`) : ok("nessun pulsante visibile senza gestore");
+}
+
+// ---- Nuovo mondo (quello dell'INTESTAZIONE, non il gemello nell'esercizio) ---
 let prima = await testoTerminale();
-let fatto = await clicca(".es.aperto .es-barra .btn.mini:nth-child(3)");
-fatto === "Nuovo mondo" ? ok("cliccato «Nuovo mondo»") : ko(`cliccato il pulsante sbagliato: ${fatto}`);
+let fatto = await clicca("#btnNuovoMondo");
+fatto === "Nuovo mondo" ? ok("cliccato «Nuovo mondo» nell'intestazione") : ko(`cliccato il pulsante sbagliato: ${fatto}`);
 for (let i = 1; i <= 50; i++) {
     await dormi(500);
     if ((await val(`globalThis.__note||0`)) > 0) break;
@@ -131,8 +150,8 @@ else ko("nessun elenco del nuovo mondo");
 
 // ---- Ricomincia l'esercizio ------------------------------------------------
 prima = await testoTerminale();
-fatto = await clicca(".es.aperto .es-barra .btn.mini:nth-child(2)");
-fatto ? ok(`cliccato «${fatto}»`) : ko("pulsante «Ricomincia» non trovato");
+fatto = await clicca("#btnRicomincia");
+fatto ? ok(`cliccato «${fatto}» nell'intestazione`) : ko("pulsante «Ricomincia» non trovato");
 for (let i = 0; i < 40; i++) { await dormi(500); if ((await val(`globalThis.__note||0`)) > 1) break; }
 dopo = await testoTerminale();
 dopo.includes("Ricomincia") ? ok("«Ricomincia» lascia un segno nel terminale")

@@ -108,7 +108,32 @@ for (const cap of capitoli) {
     for (const es of esercizi) provaEsercizio(cap, es);
 }
 
+// La pulizia NON e' `docker rm` e basta: i volumi LVM, gli array e i loop device
+// che il capitolo 21 crea sono globali dell'host e sopravvivono al container.
+// Prima si disfa da dentro, finche' gli strumenti ci sono; poi si toglie il resto
+// dall'host e si DICE cosa e' rimasto, invece di dare per scontato che non resti
+// niente. (Trovato in revisione il 2026-08-16: il test lasciava tutto appeso.)
+console.log("\npulizia");
+try {
+    sh(`docker exec ${NOME} sh -c '
+        umount /mnt/lab 2>/dev/null || umount -l /mnt/lab 2>/dev/null
+        command -v vgchange >/dev/null && { vgchange -an lab-vg; vgremove -f lab-vg; } 2>/dev/null
+        [ -e /dev/md/lab-raid ] && mdadm --stop /dev/md/lab-raid
+        true'`);
+} catch {}
 try { sh(`docker rm -f ${NOME}`); } catch {}
+for (const md of ["/dev/md/lab-raid"]) {
+    try { sh(`test -e ${md} && sudo -n mdadm --stop $(readlink -f ${md})`); } catch {}
+}
+try {
+    const appesi = execSync("losetup -a 2>/dev/null | grep '/lab-' | grep -o '^/dev/loop[0-9]*' || true",
+        { encoding: "utf8" }).trim().split("\n").filter(Boolean);
+    for (const l of appesi) { try { sh(`sudo -n losetup -d ${l}`); } catch {} }
+    const restano = execSync("losetup -a 2>/dev/null | grep -c '/lab-' || true", { encoding: "utf8" }).trim();
+    if (restano !== "0") console.log(`  ⚠ restano ${restano} loop device del laboratorio: ./lab/local/run.sh cleanup`);
+    else console.log("  niente di nostro è rimasto sull'host");
+} catch {}
+
 console.log(`\n${passati} asserzioni superate, ${guai.length} problemi`);
 if (guai.length) console.log("\n" + guai.map(g => "  - " + g).join("\n") + "\n");
 process.exit(guai.length ? 1 : 0);

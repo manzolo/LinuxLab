@@ -148,9 +148,6 @@ export default {
                      files. Hand in the number with <code>lab answer</code>.`,
             },
             attrezzi: [
-                { cmd: "wc -l", cap: 4, cosa: {
-                    it: "conta le righe di quello che gli arriva. Contare le righe di un elenco è il modo normale di contare le cose, nel terminale.",
-                    en: "counts the lines of whatever it is given. Counting the lines of a list is the ordinary way to count things in a terminal." } },
                 { cmd: "grep", cap: 9, cosa: {
                     it: "tiene solo le righe che contengono quello che gli chiedi e butta via le altre. Nel suggerimento serve a tenere i soli nomi che cominciano con un punto.",
                     en: "keeps only the lines containing what you ask for and throws the rest away. In the hint it keeps only the names starting with a dot." } },

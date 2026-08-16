@@ -423,3 +423,8 @@ body.pro .probox { display: block; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* Il segno "l'ho fatto" dei capitoli locali: qui la verifica gira nel container,
+   e il sito non la vede. Meglio dirlo che lasciare 0/N per sempre. */
+.locale-fatto { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.locale-fatto span { color: var(--ink-faint); font-size: 12.5px; font-style: italic; }

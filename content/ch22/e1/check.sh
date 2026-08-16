@@ -27,8 +27,15 @@ sed -i 's#root /srv/sito;#root /var/www/html;#' /etc/nginx/sites-enabled/default
 systemctl reload nginx >/dev/null 2>&1 || true
 
 # Si esegue DUE volte: la seconda dimostra l'idempotenza.
-sh "$s" >/tmp/prov1.log 2>&1; rc1=$?
-sh "$s" >/tmp/prov2.log 2>&1; rc2=$?
+#
+# ESEGUITO, non dato in pasto a `sh`. Prima era `sh "$s"`, che ignora la riga
+# `#!/bin/bash` in cima: uno script bash valido — con `[[ ... ]]` o un array —
+# veniva rifiutato, e il capitolo 16 quel bash lo insegna esplicitamente. Il
+# corso permetteva una cosa e la verifica la bocciava.
+# (Revisione esterna del 2026-08-16.)
+chmod +x "$s" 2>/dev/null || true
+"$s" >/tmp/prov1.log 2>&1; rc1=$?
+"$s" >/tmp/prov2.log 2>&1; rc2=$?
 lab_fact esecuzione_1 "codice $rc1"
 lab_fact esecuzione_2 "codice $rc2"
 
@@ -63,15 +70,48 @@ else lab_check servizio 1 "active=${a:-?} enabled=${e:-?}" "active + enabled"; f
 riga=$(crontab -l 2>/dev/null | grep -v '^[[:space:]]*#' | grep backup.sh | head -1)
 m=$(echo "$riga" | awk '{print $1}'); h=$(echo "$riga" | awk '{print $2}')
 lab_fact cron "${riga:-(nessuna riga)}"
-if [ "$m" = 30 ] && { [ "$h" = 3 ] || [ "$h" = 03 ]; } && [ -x /usr/local/bin/backup.sh ]; then lab_check backup 0
-else lab_check backup 1 "min=${m:-?} ora=${h:-?} script=$([ -x /usr/local/bin/backup.sh ] && echo ok || echo mancante)" "30 3 + script eseguibile"; fi
+# "ogni giorno alle 3:30" sono CINQUE campi, non due: senza guardare gli ultimi tre
+# passava anche un backup che gira il 3 di ogni mese. (Revisione esterna del 2026-08-16.)
+dom=$(echo "$riga" | awk '{print $3}'); mon=$(echo "$riga" | awk '{print $4}'); dow=$(echo "$riga" | awk '{print $5}')
+lab_fact cron_campi "min=${m:-?} ora=${h:-?} giorno=${dom:-?} mese=${mon:-?} settimana=${dow:-?}"
+if [ "$m" = 30 ] && { [ "$h" = 3 ] || [ "$h" = 03 ]; } \
+   && [ "$dom" = '*' ] && [ "$mon" = '*' ] && [ "$dow" = '*' ] \
+   && [ -x /usr/local/bin/backup.sh ]; then lab_check backup 0
+else lab_check backup 1 "min=${m:-?} ora=${h:-?} ${dom:-?} ${mon:-?} ${dow:-?} script=$([ -x /usr/local/bin/backup.sh ] && echo ok || echo mancante)" "30 3 * * * + script eseguibile"; fi
 
-# 6 — firewall
+# 6 — firewall: si BUSSA, non si legge il ruleset. Stessa sonda del capitolo 20 —
+# un namespace di rete con un cavo virtuale verso qui, cosi' il traffico attraversa
+# davvero la catena input. Una regola generica `tcp accept` lascia tutto aperto e
+# passerebbe qualunque lettura del testo. (Revisione esterna del 2026-08-16.)
 rs=$(nft list ruleset 2>/dev/null)
 lab_fact firewall "$(echo "$rs" | tr '\n' ' ' | head -c 130)"
-if echo "$rs" | grep -A2 'chain input' | grep -q 'policy drop' \
-   && echo "$rs" | grep -qE 'dport .*22' && echo "$rs" | grep -qE 'dport .*80'; then lab_check firewall 0
-else lab_check firewall 1 "(policy o porte mancanti)" "policy drop + 22 e 80 aperte"; fi
+ip netns del lab-sonda 2>/dev/null || true; ip link del lab-a 2>/dev/null || true
+sonda=no
+if ip netns add lab-sonda 2>/dev/null && ip link add lab-a type veth peer name lab-b 2>/dev/null \
+   && ip link set lab-b netns lab-sonda 2>/dev/null; then
+    ip addr add 10.66.0.1/24 dev lab-a 2>/dev/null; ip link set lab-a up 2>/dev/null
+    ip netns exec lab-sonda ip addr add 10.66.0.2/24 dev lab-b 2>/dev/null
+    ip netns exec lab-sonda ip link set lab-b up 2>/dev/null
+    sonda=si
+fi
+bussa() {   # "risponde" | "rifiuta" | "silenzio"
+    i=$(date +%s%N)
+    ip netns exec lab-sonda timeout 3 bash -c "exec 3<>/dev/tcp/10.66.0.1/$1" >/dev/null 2>&1
+    r=$?; f=$(date +%s%N); ms=$(( (f - i) / 1000000 ))
+    if [ "$r" -eq 0 ]; then echo risponde; elif [ "$ms" -ge 2500 ]; then echo silenzio; else echo rifiuta; fi
+}
+if [ "$sonda" = si ]; then
+    p22=$(bussa 22); p80=$(bussa 80); p3306=$(bussa 3306)
+    lab_fact bussato "22=$p22 80=$p80 3306=$p3306"
+    if [ "$p22" != silenzio ] && [ "$p80" != silenzio ] && [ "$p3306" = silenzio ]; then lab_check firewall 0
+    else lab_check firewall 1 "22=$p22 80=$p80 3306=$p3306" "22 e 80 raggiungibili, 3306 nel silenzio"; fi
+else
+    lab_fact sonda "non disponibile: verificato leggendo il ruleset, non bussando"
+    if echo "$rs" | grep -A2 'chain input' | grep -q 'policy drop' \
+       && echo "$rs" | grep -qE 'dport .*22' && echo "$rs" | grep -qE 'dport .*80'; then lab_check firewall 0
+    else lab_check firewall 1 "(policy o porte mancanti)" "policy drop + 22 e 80 aperte"; fi
+fi
+ip netns del lab-sonda 2>/dev/null || true; ip link del lab-a 2>/dev/null || true
 
 # PRO — idempotenza: la seconda esecuzione non deve rompere niente ne' duplicare
 righe_cron=$(crontab -l 2>/dev/null | grep -c backup.sh)

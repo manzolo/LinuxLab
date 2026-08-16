@@ -177,6 +177,11 @@ export default {
                          en: "Seeing the handshake with your own eyes is what turns \"TCP\" from a word into a thing: SYN, SYN-ACK, ACK, and only then the data." },
                   nudge: { it: "<code>tcpdump -n -i lo -c 10 port 80 &gt; /root/lab/cattura.txt &amp;</code>, poi <code>curl -s localhost &gt;/dev/null</code>, poi <code>wait</code>.",
                            en: "<code>tcpdump -n -i lo -c 10 port 80 &gt; /root/lab/cattura.txt &amp;</code>, then <code>curl -s localhost &gt;/dev/null</code>, then <code>wait</code>." } },
+                { id: "risposta-del-server",
+                  why: { it: "Una cattura non è una frase: è una <strong>conversazione</strong>. Al SYN del client corrisponde il SYN-ACK del server <em>verso la stessa porta effimera</em> — quel numero lo sceglie il kernel al momento, e non lo si può indovinare. È anche il modo in cui si legge davvero un `tcpdump`: si seguono le due parti, non le singole righe.",
+                         en: "A capture is not a sentence: it is a <strong>conversation</strong>. The client's SYN is answered by the server's SYN-ACK <em>to the same ephemeral port</em> — a number the kernel picks on the spot, impossible to guess. It is also how you actually read a `tcpdump`: you follow both sides, not single lines." },
+                  nudge: { it: "Nella cattura cerca le due righe consecutive: <code>… .PORTA &gt; ….80: Flags [S]</code> e <code>… .80 &gt; ….PORTA: Flags [S.]</code>. Se manca la seconda, hai catturato solo un verso: togli il filtro sull'interfaccia o usa <code>-i lo</code>.",
+                           en: "In the capture look for the two consecutive lines: <code>… .PORT &gt; ….80: Flags [S]</code> and <code>… .80 &gt; ….PORT: Flags [S.]</code>. If the second is missing you captured one direction only: drop the interface filter or use <code>-i lo</code>." } },
             ],
             hints: [
                 { it: "<code>tcpdump</code> vuole l'interfaccia (<code>-i lo</code>) e un filtro (<code>port 80</code>).", en: "<code>tcpdump</code> wants an interface (<code>-i lo</code>) and a filter (<code>port 80</code>)." },

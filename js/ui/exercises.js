@@ -26,6 +26,23 @@ let contenitore = null;
 let pronta = false;
 let alCambio = () => {};
 
+// Le azioni dell'esercizio aperto, esposte fuori.
+//
+// Servono ai due pulsanti gemelli nell'intestazione del laboratorio: erano in
+// pagina dal primo giorno e non avevano alcun gestore — cliccarli non faceva
+// letteralmente niente. Il test dei pulsanti non se n'era accorto perche' clicca
+// quelli DENTRO l'esercizio, che invece funzionano: due bottoni con la stessa
+// etichetta, uno vivo e uno morto. (Trovato in revisione il 2026-08-16, ed e' la
+// seconda meta' del difetto che Andrea aveva segnalato la mattina stessa.)
+//
+// Non si duplica la logica: l'intestazione chiama le stesse funzioni della barra
+// dell'esercizio, con lo stesso stato di attesa e lo stesso banner.
+let azioni = null;
+const ascoltatoriAzioni = [];
+export const azioniEsercizio = () => azioni;
+export const suAzioniEsercizio = fn => { ascoltatoriAzioni.push(fn); fn(azioni); };
+function impostaAzioni(a) { azioni = a; ascoltatoriAzioni.forEach(f => f(a)); }
+
 export function inizializzaEsercizi(nodo, onCambio) {
     contenitore = nodo;
     alCambio = onCambio || (() => {});
@@ -35,9 +52,22 @@ export function macchinaPronta(v) { pronta = v; }
 
 export const esercizioCorrente = () => esCorrente;
 
+// Ogni apertura di esercizio prende un numero. Chi torna da un `await` e scopre
+// che nel frattempo il numero e' cambiato si ferma: non tocca la pagina e non
+// semina niente.
+//
+// Senza, due aperture ravvicinate — due clic, o un cambio di capitolo mentre la
+// prima sta ancora seminando — possono finire in ordine inverso: a schermo
+// l'esercizio B, e nella macchina il mondo di A. Nessuno se ne accorgerebbe
+// finche' la verifica non fallisse per una ragione inventata. (Trovato in
+// revisione il 2026-08-16; i test navigano piano e non ci passano mai.)
+let generazione = 0;
+
 export function disegnaEsercizi(cap) {
     capCorrente = cap;
     esCorrente = null;
+    generazione++;
+    impostaAzioni(null);
     contenitore.replaceChildren();
 
     if (!cap.exercises?.length) return;
@@ -70,6 +100,8 @@ export function disegnaEsercizi(cap) {
 async function apri(cap, es, box) {
     const gia = box.classList.contains("aperto");
     contenitore.querySelectorAll(".es").forEach(b => b.classList.remove("aperto"));
+    const mia = ++generazione;
+    impostaAzioni(null);
     if (gia) { esCorrente = null; return; }
 
     box.classList.add("aperto");
@@ -106,6 +138,26 @@ async function apri(cap, es, box) {
         };
         corpo.append(bA, zA);
         corpo.append(costruisciAiuti(es));
+
+        // I capitoli locali non potevano risultare completati: qui la funzione
+        // usciva prima di qualunque `segnaFatto`, quindi 17-22 restavano 0/N per
+        // sempre e non alimentavano il quaderno. La verifica gira nel container e
+        // il sito non la vede — quindi il segno lo mette chi studia, e il pannello
+        // lo dice invece di far finta. (Revisione esterna del 2026-08-16.)
+        const idPieno = `${cap.id}.${es.id}`;
+        const bF = el("button", "btn mini", t(eFatto(idPieno) ? "localeFattoOk" : "localeFatto"));
+        bF.disabled = eFatto(idPieno);
+        bF.onclick = () => {
+            segnaFatto(idPieno);
+            box.classList.add("fatto");
+            annotaComandi(cap.commands || [], cap.num);
+            bF.textContent = t("localeFattoOk");
+            bF.disabled = true;
+            alCambio();
+        };
+        const nota = el("div", "locale-fatto");
+        nota.append(bF, el("span", null, t("localeFattoNota")));
+        corpo.append(nota);
         return;
     }
 
@@ -188,7 +240,11 @@ async function apri(cap, es, box) {
     // i pulsanti. L'ordine e' la correzione: prima i gestori, poi l'attesa.
     if (pronta) {
         await prepara(semePer(`${cap.id}.${es.id}`));
+        if (mia !== generazione) return;   // nel frattempo si e' aperto altro
         btnVer.disabled = btnRic.disabled = btnNuo.disabled = false;
+        // I gemelli nell'intestazione premono questi stessi bottoni: stessa
+        // funzione, stesso stato di attesa, stesso banner. Un solo comportamento.
+        impostaAzioni({ ricomincia: () => btnRic.click(), nuovoMondo: () => btnNuo.click() });
     }
 }
 

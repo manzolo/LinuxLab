@@ -217,6 +217,11 @@ export default {
                      interprets it, not as you typed it.</em>`,
             },
             checks: [
+                { id: "servizio-oneshot",
+                  why: { it: "Un timer punta a un servizio: se il servizio non c'è, il timer si abilita lo stesso e alle 3:30 non succede niente. <code>Type=oneshot</code> dice a systemd che quel servizio <em>deve</em> finire — non è un demone che resta acceso.",
+                         en: "A timer points at a service: if the service is missing, the timer still enables and at 3:30 nothing happens. <code>Type=oneshot</code> tells systemd that this service <em>is meant</em> to finish — it is not a daemon that stays up." },
+                  nudge: { it: "<code>systemctl show backup.service -p LoadState -p Type</code> dice se systemd lo vede e come lo considera.",
+                           en: "<code>systemctl show backup.service -p LoadState -p Type</code> says whether systemd sees it and how it treats it." } },
                 { id: "timer-attivo",
                   why: { it: "Un timer si abilita come un servizio, ma quello che si abilita è il <code>.timer</code>, non il <code>.service</code>. È l'errore più comune del capitolo.",
                          en: "A timer is enabled like a service, but what you enable is the <code>.timer</code>, not the <code>.service</code>. It is this chapter's most common mistake." },

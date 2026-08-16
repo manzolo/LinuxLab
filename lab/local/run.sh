@@ -59,20 +59,68 @@ EOF
 
 # ------------------------------------------------------------------ pulizia
 
+# La regola, non negoziabile: si tocca SOLO quello che porta il nostro nome, e lo si
+# verifica prima di toccarlo. Qui si lavora sull'host di chi studia, e un cleanup che
+# sbaglia bersaglio fa piu' danni di tutto il capitolo messo insieme.
+#
+# Cosa e' andato storto nella prima versione (segnalato in revisione il 2026-08-16):
+#   - fermava ogni /dev/md12*, che comprende **/dev/md127**, cioe' il nome che il
+#     kernel assegna da solo agli array assemblati all'avvio: array VERI dell'host;
+#   - eliminava il container PRIMA di usare gli strumenti che stanno dentro, e poi
+#     si affidava a `vgchange` dell'host, che su una macchina senza LVM non c'e';
+#   - non smontava niente: `vgremove -f` su un VG ancora montato non e' un cleanup.
 pulisci() {
     giallo "smonto e stacco quello che il laboratorio ha creato…"
-    docker rm -f "$NOME" >/dev/null 2>&1 || true
-    if command -v vgchange >/dev/null 2>&1; then
-        sudo vgchange -an lab-vg 2>/dev/null || true
-        sudo vgremove -f lab-vg 2>/dev/null || true
+
+    # 1. Prima si smonta e si disfa DA DENTRO, finche' il container c'e': gli
+    #    strumenti (lvm, mdadm) sono li', non necessariamente sull'host.
+    if docker ps -a --format '{{.Names}}' | grep -qx "$NOME"; then
+        docker exec "$NOME" sh -c '
+            umount /mnt/lab 2>/dev/null || umount -l /mnt/lab 2>/dev/null
+            command -v vgchange >/dev/null && { vgchange -an lab-vg; vgremove -f lab-vg; } 2>/dev/null
+            [ -e /dev/md/lab-raid ] && mdadm --stop /dev/md/lab-raid
+            true
+        ' >/dev/null 2>&1 || true
+        docker rm -f "$NOME" >/dev/null 2>&1 || true
     fi
-    for md in /dev/md/lab-* /dev/md12*; do
-        [ -e "$md" ] && sudo mdadm --stop "$md" 2>/dev/null || true
+
+    # 2. Poi, sull'host, solo quello che porta il nostro nome. `vgchange` puo' non
+    #    esserci: se manca, lo si dice invece di far finta di aver pulito.
+    if command -v vgs >/dev/null 2>&1; then
+        if sudo vgs lab-vg >/dev/null 2>&1; then
+            sudo vgchange -an lab-vg 2>/dev/null || true
+            sudo vgremove -f lab-vg 2>/dev/null || true
+        fi
+    elif sudo test -e /dev/lab-vg; then
+        rosso "resta un gruppo di volumi 'lab-vg' e su questo host non c'è LVM per toglierlo."
+        rosso "   installa lvm2 e ridai  $0 cleanup"
+    fi
+
+    # 3. Gli array: SOLO quelli con il nostro nome, e solo dopo aver riletto dal
+    #    kernel come si chiamano davvero. Niente glob su /dev/md*.
+    for md in /dev/md/lab-*; do
+        [ -e "$md" ] || continue
+        reale=$(readlink -f "$md")
+        nome=$(sudo mdadm --detail "$reale" 2>/dev/null | sed -n 's/.*Name : .*:\([^ ]*\).*/\1/p')
+        case "$nome" in
+            lab-*) sudo mdadm --stop "$reale" 2>/dev/null || true ;;
+            *)     giallo "salto $md: si chiama '$nome', non è roba del laboratorio" ;;
+        esac
     done
+
+    # 4. I loop device: si guarda il file che c'e' dietro, non il numero.
     for l in $(losetup -a 2>/dev/null | grep -o '^/dev/loop[0-9]*' || true); do
         if losetup "$l" 2>/dev/null | grep -q '/lab-'; then sudo losetup -d "$l" 2>/dev/null || true; fi
     done
-    verde "fatto"
+
+    # 5. Si dice com'e' finita, invece di dire "fatto" e basta.
+    residui=""
+    command -v vgs >/dev/null 2>&1 && sudo vgs lab-vg >/dev/null 2>&1 && residui="$residui lab-vg"
+    for md in /dev/md/lab-*; do [ -e "$md" ] && residui="$residui $md"; done
+    for l in $(losetup -a 2>/dev/null | grep -o '^/dev/loop[0-9]*' || true); do
+        losetup "$l" 2>/dev/null | grep -q '/lab-' && residui="$residui $l"
+    done
+    if [ -n "$residui" ]; then rosso "restano appesi:$residui"; else verde "fatto: niente di nostro è rimasto"; fi
 }
 
 # ------------------------------------------------------------------ via
@@ -92,10 +140,13 @@ docker image inspect "$IMG" >/dev/null 2>&1 || {
 
 docker rm -f "$NOME" >/dev/null 2>&1 || true
 
-# --privileged serve solo dal capitolo 21 (LVM/RAID). Per 17-20 bastano meno diritti.
+# --privileged serve SOLO al capitolo 21 (LVM/RAID), che tocca dispositivi a blocchi.
+# Il 22 non ne tocca nessuno — nessun losetup, nessun lvcreate, nessun mdadm — e per
+# anni di abitudine gli era stato dato lo stesso: diritti di root sull'host per un
+# esercizio che crea un utente e un file di nginx. Tolto.
 PRIV=(--cap-add NET_ADMIN --cap-add SYS_ADMIN --security-opt seccomp=unconfined)
 case "$CAP" in
-    21|22) PRIV=(--privileged); giallo "capitolo $CAP: serve --privileged (dispositivi a blocchi)" ;;
+    21) PRIV=(--privileged); giallo "capitolo 21: serve --privileged (dispositivi a blocchi)" ;;
 esac
 
 verde "avvio il laboratorio…"
