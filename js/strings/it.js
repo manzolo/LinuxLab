@@ -5,8 +5,8 @@ export default {
     // percorsi (la famiglia di lab, dal 2026-08-25)
     percorsiTitolo: "I percorsi",
     percorsiCore: "<strong>Linux Core</strong> — questo sito: da zero all'amministrazione di un server. Capitoli 1–16 nel browser, 17–22 sul laboratorio locale.",
-    percorsiSystems: "<strong>Linux Systems</strong> — boot, kernel, dischi, recovery: macchine virtuali vere. In costruzione.",
-    percorsiContainer: "<strong>Container Lab</strong> — dai namespace a un servizio multi-container sicuro. In costruzione.",
+    percorsiSystems: "<strong>Linux Systems</strong> — boot, kernel, dischi, recovery su macchine virtuali vere. Pronto: <a href='https://github.com/manzolo/qlab-plugin-systems-lab' target='_blank' rel='noopener'>plugin qlab</a> (8 capitoli).",
+    percorsiContainer: "<strong>Container Lab</strong> — dai namespace a un servizio multi-container sicuro. Pronto: <a href='https://github.com/manzolo/qlab-plugin-container-lab' target='_blank' rel='noopener'>plugin qlab</a> (11 capitoli).",
     tocLegenda: "💻 = si fa sul tuo computer (serve Docker) · ⚠️ = usa un container --privileged, il capitolo spiega perché",
     tocPrivilegiato: "Questo capitolo usa un container --privileged: il perché e le cautele sono dichiarati nel capitolo.",
     navIntro: "Basi",

@@ -154,8 +154,8 @@ viene spiegata, eseguita e verificata davvero.**
 | Percorso | Cosa promette | Dove gira | Stato |
 |----------|---------------|-----------|-------|
 | **Linux Core** (questo) | da zero all'amministrazione operativa di un server | browser (1–16) + Docker locale (17–22) | ✅ online |
-| **Linux Systems** | boot, kernel, dischi, recovery: capire e riparare una macchina che non parte | macchine virtuali vere (QEMU/qlab) | 🔨 in costruzione |
-| **Container Lab** | dai namespace a un servizio multi-container sicuro | browser + VM con Docker | 🔨 in costruzione |
+| **[Linux Systems](https://github.com/manzolo/qlab-plugin-systems-lab)** | boot, kernel, dischi, recovery: capire e riparare una macchina che non parte | macchine virtuali vere (QEMU/qlab) | ✅ completo — 8 capitoli |
+| **[Container Lab](https://github.com/manzolo/qlab-plugin-container-lab)** | dai namespace a un servizio multi-container sicuro | VM con Docker (qlab) | ✅ completo — 11 capitoli |
 
 ## Cosa questo lab NON copre
 

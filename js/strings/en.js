@@ -5,8 +5,8 @@ export default {
     // tracks (the lab family, since 2026-08-25)
     percorsiTitolo: "The tracks",
     percorsiCore: "<strong>Linux Core</strong> — this site: from zero to server administration. Chapters 1–16 in the browser, 17–22 on the local lab.",
-    percorsiSystems: "<strong>Linux Systems</strong> — boot, kernel, disks, recovery: real virtual machines. Under construction.",
-    percorsiContainer: "<strong>Container Lab</strong> — from namespaces to a safely run multi-container service. Under construction.",
+    percorsiSystems: "<strong>Linux Systems</strong> — boot, kernel, disks, recovery on real virtual machines. Ready: <a href='https://github.com/manzolo/qlab-plugin-systems-lab' target='_blank' rel='noopener'>qlab plugin</a> (8 chapters).",
+    percorsiContainer: "<strong>Container Lab</strong> — from namespaces to a safely run multi-container service. Ready: <a href='https://github.com/manzolo/qlab-plugin-container-lab' target='_blank' rel='noopener'>qlab plugin</a> (11 chapters).",
     tocLegenda: "💻 = runs on your computer (Docker required) · ⚠️ = uses a --privileged container, the chapter explains why",
     tocPrivilegiato: "This chapter uses a --privileged container: the reason and the safeguards are stated in the chapter.",
     navIntro: "Basics",
