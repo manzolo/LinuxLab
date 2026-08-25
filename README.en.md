@@ -1,7 +1,7 @@
 # EDU-LINUX · Linux Lab
 
 **Learning Linux with a terminal that actually answers.**
-This is **Linux Core**: 22 chapters, from your first command line to bringing up a server —
+This is **Linux Core**: 24 chapters, from your first command line to bringing up a server —
 the first of three tracks (see [The tracks](#the-tracks)).
 
 👉 **[Try it online](https://manzolo.github.io/LinuxLab/?lang=en)** — nothing to install, no account.
@@ -157,10 +157,13 @@ gets explained, executed and actually verified.**
 ## What this lab does NOT cover
 
 Plainly: boot and bootloaders (GRUB, initramfs), kernel and modules, partitioning real disks,
-virtualisation, containers as a subject of their own, permanent distribution network
-configuration. Those are real, large topics and deserve more than a passing mention — which
-is why they are becoming **the Linux Systems and Container Lab tracks** above, not chapters
-tacked onto the end of this one.
+virtualisation, containers as a full course, permanent distribution network configuration.
+Those are real, large topics and deserve more than a passing mention — which is why they are
+**the Linux Systems and Container Lab tracks** above, not chapters tacked onto the end of this
+one. Two tastes do live in the browser, though, because the v86 kernel supports them:
+**chapter 23** (diagnostics: CPU, memory, a full disk) and **chapter 24** (a container is just
+a process: namespaces raised by hand). The rest — boot, LUKS, real disks, full Docker —
+doesn't fit, and is the qlab plugins' material.
 
 On mobile the lab is **readable but not practicable**: a terminal needs a real keyboard. The
 site says so rather than letting you try and get frustrated.
