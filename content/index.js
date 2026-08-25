@@ -28,6 +28,7 @@ export const CAPITOLI = [
     { id: "ch21", num: 21, runtime: "local", privilegiato: true, carica: () => import("./ch21/chapter.js") },
     { id: "ch22", num: 22, runtime: "local",   carica: () => import("./ch22/chapter.js") },
     { id: "ch23", num: 23, runtime: "browser", carica: () => import("./ch23/chapter.js") },
+    { id: "ch24", num: 24, runtime: "browser", carica: () => import("./ch24/chapter.js") },
 ];
 
 const cache = new Map();
