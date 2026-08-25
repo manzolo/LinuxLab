@@ -25,6 +25,7 @@ let esCorrente = null;
 let contenitore = null;
 let pronta = false;
 let alCambio = () => {};
+let alPreparazione = () => {};
 
 // Le azioni dell'esercizio aperto, esposte fuori.
 //
@@ -43,9 +44,10 @@ export const azioniEsercizio = () => azioni;
 export const suAzioniEsercizio = fn => { ascoltatoriAzioni.push(fn); fn(azioni); };
 function impostaAzioni(a) { azioni = a; ascoltatoriAzioni.forEach(f => f(a)); }
 
-export function inizializzaEsercizi(nodo, onCambio) {
+export function inizializzaEsercizi(nodo, onCambio, onPreparazione) {
     contenitore = nodo;
     alCambio = onCambio || (() => {});
+    alPreparazione = onPreparazione || (() => {});
 }
 
 export function macchinaPronta(v) { pronta = v; }
@@ -71,11 +73,21 @@ export const esercizioCorrente = () => esCorrente;
 // aggiornare la UI vecchia, non che A finisca dopo B». Era esatto.)
 let generazione = 0;
 let coda = Promise.resolve();
-const inFila = azione => (coda = coda.then(azione, azione));
+let operazioniInFila = 0;
+const inFila = azione => {
+    operazioniInFila++;
+    if (operazioniInFila === 1) alPreparazione(true);
+    const risultato = coda.then(azione, azione);
+    coda = risultato;
+    return risultato.finally(() => {
+        operazioniInFila--;
+        if (operazioniInFila === 0) alPreparazione(false);
+    });
+};
 /** Per chi semina da fuori (il ripristino della macchina): stessa fila. */
 export const accodaSemina = azione => inFila(azione);
 
-export function disegnaEsercizi(cap) {
+export async function disegnaEsercizi(cap) {
     capCorrente = cap;
     esCorrente = null;
     generazione++;
@@ -106,7 +118,7 @@ export function disegnaEsercizi(cap) {
     // Il primo non ancora fatto si apre da solo: e' quasi sempre quello che vuoi.
     const primo = cap.exercises.find(e => !eFatto(`${cap.id}.${e.id}`)) || cap.exercises[0];
     const nodo = contenitore.querySelector(`[data-es="${primo.id}"]`);
-    if (nodo) apri(cap, primo, nodo);
+    if (nodo) await apri(cap, primo, nodo);
 }
 
 async function apri(cap, es, box) {

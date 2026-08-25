@@ -9,10 +9,11 @@ import { inizializzaEsercizi, disegnaEsercizi, macchinaPronta, esercizioCorrente
 import { apriSommario, apriIntro, apriQuaderno } from "./ui/overlays.js";
 import { avvia, onProgresso, reimposta, mostraPrompt } from "./lab/machine.js";
 import { attendiAgente } from "./lab/agent.js";
-import { creaTerminale, adatta, pulisciTerminale, scriviNota } from "./lab/terminal.js";
+import { creaTerminale, adatta, pulisciTerminale, scriviNota, abilitaInputTerminale } from "./lab/terminal.js";
 
 const $ = id => document.getElementById(id);
 let idCorrente = null;
+let navigando = false;
 
 // ------------------------------------------------------------------ lingua e profondità
 
@@ -45,22 +46,30 @@ function aggiornaSwitch(sel, chiave, valore) {
 // ------------------------------------------------------------------ navigazione
 
 async function vaiA(id, spingiUrl = true) {
+    if (navigando) return;
+    navigando = true;
     let cap;
-    try { cap = await capitolo(id); }
-    catch { cap = await capitolo(primoCapitolo()); id = cap.id; }
+    try {
+        try { cap = await capitolo(id); }
+        catch { cap = await capitolo(primoCapitolo()); id = cap.id; }
 
-    idCorrente = id;
-    set("page", id);
-    if (spingiUrl) {
-        const u = new URL(location.href);
-        u.searchParams.set("ch", cap.num);
-        history.replaceState(null, "", u);
+        idCorrente = id;
+        set("page", id);
+        if (spingiUrl) {
+            const u = new URL(location.href);
+            u.searchParams.set("ch", cap.num);
+            history.replaceState(null, "", u);
+        }
+
+        disegnaCapitolo(cap, $("capitolo"), vaiA);
+        aggiornaPiede(cap);
+        $("btnPrec").disabled = $("btnSucc").disabled = true;
+        await disegnaEsercizi(cap);
+        aggiornaProgresso();
+    } finally {
+        navigando = false;
+        if (cap) aggiornaPiede(cap);
     }
-
-    disegnaCapitolo(cap, $("capitolo"), vaiA);
-    disegnaEsercizi(cap);
-    aggiornaPiede(cap);
-    aggiornaProgresso();
 }
 
 function aggiornaPiede(cap) {
@@ -111,7 +120,7 @@ $("btnReimposta").onclick = async () => {
     const btn = $("btnReimposta");
     const testo = btn.textContent;
     btn.disabled = true; btn.textContent = "…";
-    stato.textContent = "…";
+    impostaBancoInPreparazione(true);
     try {
         await reimposta();
         pulisciTerminale();
@@ -120,7 +129,7 @@ $("btnReimposta").onclick = async () => {
         await riseminaEsercizioCorrente();
     } finally {
         btn.disabled = false; btn.textContent = testo;
-        stato.textContent = t("labPronta");
+        impostaBancoInPreparazione(false);
     }
 };
 
@@ -145,7 +154,20 @@ if (soloTocco) {
     $("esercizi").before(a);
 }
 
-inizializzaEsercizi($("esercizi"), aggiornaProgresso);
+let blocchiPreparazione = 0;
+function impostaBancoInPreparazione(attiva) {
+    blocchiPreparazione = Math.max(0, blocchiPreparazione + (attiva ? 1 : -1));
+    const occupato = blocchiPreparazione > 0;
+    abilitaInputTerminale(!occupato);
+    $("pannelloLab").classList.toggle("preparazione", occupato);
+    $("terminale").setAttribute("aria-busy", String(occupato));
+    if (occupato) $("terminale").dataset.busyLabel = t("labPreparazione");
+    else delete $("terminale").dataset.busyLabel;
+    stato.textContent = t(occupato ? "labPreparazione" : "labPronta");
+    stato.className = occupato ? "lab-stato preparazione" : "lab-stato pronta";
+}
+
+inizializzaEsercizi($("esercizi"), aggiornaProgresso, impostaBancoInPreparazione);
 
 // Dopo un ripristino della macchina, il mondo dell'esercizio aperto e' sparito
 // insieme al resto: va riseminato, o il primo `Verifica` fallirebbe senza motivo.

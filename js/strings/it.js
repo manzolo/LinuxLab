@@ -20,6 +20,7 @@ export default {
     labScarico: "Scarico la macchina… {0}%",
     labAvvio: "Avvio Linux…",
     labPronta: "Macchina pronta",
+    labPreparazione: "Preparo l'esercizio… terminale in pausa",
     labErrore: "Immagine non compilata. Vedi lab/README.md: <code>make -C lab all</code>",
     labReimposta: "Reimposta la macchina",
     labReimpostaTitle: "Riporta la macchina allo stato iniziale. Usalo senza timore.",

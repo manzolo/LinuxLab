@@ -5,6 +5,7 @@ import { macchina, risveglia } from "./machine.js";
 import { shell } from "./agent.js";
 
 let term = null;
+let inputAbilitato = true;
 
 export function creaTerminale(contenitore) {
     if (term) { term.open(contenitore); adatta(contenitore); return term; }
@@ -12,6 +13,7 @@ export function creaTerminale(contenitore) {
     term = new window.Terminal({
         convertEol: true,
         cursorBlink: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+        disableStdin: !inputAbilitato,
         fontFamily: 'ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace',
         fontSize: 13,
         scrollback: 4000,
@@ -23,11 +25,21 @@ export function creaTerminale(contenitore) {
         },
     });
     term.open(contenitore);
-    term.onData(d => macchina()?.serial0_send(d));
+    term.onData(d => { if (inputAbilitato) macchina()?.serial0_send(d); });
     macchina().add_listener("serial0-output-byte", b => term.write(String.fromCharCode(b)));
     adatta(contenitore);
     return term;
 }
+
+/** Il seed sostituisce il mondo dell'esercizio. In quella finestra xterm non deve
+ *  accettare comandi che verrebbero eseguiti a meta' o cancellati subito dopo. */
+export function abilitaInputTerminale(v) {
+    inputAbilitato = !!v;
+    if (term) term.options.disableStdin = !inputAbilitato;
+}
+
+// Gancio misurabile per l'e2e: l'overlay da solo non prova che l'input sia fermo.
+export const inputTerminaleAbilitato = () => inputAbilitato;
 
 /** Adattamento a mano: l'addon fit e' una dipendenza in piu' per una formula di due righe. */
 export function adatta(contenitore) {

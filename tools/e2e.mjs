@@ -88,6 +88,29 @@ const ko = (m) => { console.log(`  ✗ ${m}`); problemi.push(m); esitoFinale = 1
     const righeTerm = await val("document.querySelectorAll('.terminale .xterm-rows > div').length");
     righeTerm > 0 ? ok(`terminale attivo (${righeTerm} righe)`) : ko("il terminale non ha righe");
 
+    // Il seed dell'esercizio successivo puo' durare diversi secondi. Il terminale
+    // non deve accettare comandi destinati a un mondo che sta per sparire.
+    const cambioGrezz = await val(`(async () => {
+        document.querySelector('[data-es="e2"] .es-testa').click();
+        let visto = false, inputFermo = false;
+        const limite = Date.now() + 30000;
+        while (Date.now() < limite) {
+            const occupato = document.getElementById('pannelloLab').classList.contains('preparazione');
+            if (occupato) {
+                visto = true;
+                if (!window.__linuxlab.term.inputTerminaleAbilitato()) inputFermo = true;
+            }
+            if (visto && !occupato) break;
+            await new Promise(r => setTimeout(r, 20));
+        }
+        return JSON.stringify({ visto, inputFermo,
+            riattivato: window.__linuxlab.term.inputTerminaleAbilitato() });
+    })()`);
+    const cambio = JSON.parse(cambioGrezz || "{}");
+    (cambio.visto && cambio.inputFermo && cambio.riattivato)
+        ? ok("cambio esercizio: terminale in pausa durante il seed e riattivato dopo")
+        : ko(`cambio esercizio non atomico: ${cambioGrezz}`);
+
     // 3) il ciclo didattico, su ogni capitolo richiesto
     const daProvare = CAPITOLI.length ? CAPITOLI : await val("JSON.stringify(window.__linuxlab ? [] : [])").then(() => ["ch01"]);
     for (const capId of daProvare) {

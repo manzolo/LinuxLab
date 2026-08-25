@@ -19,6 +19,7 @@ export default {
     labScarico: "Downloading the machine… {0}%",
     labAvvio: "Booting Linux…",
     labPronta: "Machine ready",
+    labPreparazione: "Preparing the exercise… terminal paused",
     labErrore: "Image not built. See lab/README.md: <code>make -C lab all</code>",
     labReimposta: "Reset the machine",
     labReimpostaTitle: "Puts the machine back to its initial state. Use it without fear.",
