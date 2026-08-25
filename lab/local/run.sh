@@ -5,16 +5,18 @@
 # mantenere, kernel, bootloader, rete, porte e istruzioni per tre sistemi operativi.
 # E' esattamente il tipo di manutenzione che questo progetto ha deciso di non avere.
 #
-# Il prezzo, detto chiaro: il capitolo 21 usa --privileged, e i device-mapper e gli
-# array md sono GLOBALI dell'host. Per questo tutto quello che creiamo si chiama
-# lab-* e c'e' `lab-cleanup`. Gli altri capitoli locali (17-20 e 22) stanno con
-# NET_ADMIN + SYS_ADMIN e non toccano nessun dispositivo a blocchi.
+# Il prezzo, detto chiaro: in questo ambiente Docker systemd ha bisogno di un cgroup
+# scrivibile, che Docker concede al container con --privileged. Quindi tutti i
+# capitoli locali sono privilegiati. Solo il 21 crea intenzionalmente device-mapper,
+# loop e array md globali al kernel host; per questo ogni risorsa si chiama lab-* e
+# il cleanup ne dimostra la proprieta' prima di toccarla.
 set -euo pipefail
 
 NOME=linuxlab
 IMG=linuxlab-local
 CAP="${1:-}"
 ES="${2:-}"
+RADICE_REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 
 # Le prove di proprieta' stanno in UN SOLO posto, lo stesso file che finisce
 # nell'immagine: cosi' host e container non possono divergere.
@@ -69,7 +71,9 @@ avviso() {
 EOF
     else
         printf '
-  Container con NET_ADMIN e SYS_ADMIN: nessun dispositivo a blocchi toccato.
+  Container PRIVILEGIATO: serve a systemd per gestire il proprio cgroup.
+  Questo capitolo non crea dispositivi a blocchi, ma dentro sei root sul kernel host:
+  esegui solo i comandi del lab e usalo su una macchina di cui ti fidi.
   Alla fine:  ./run.sh cleanup
 
 '
@@ -181,25 +185,36 @@ if docker ps -a --format '{{.Names}}' | grep -qx "$NOME"; then
     pulisci
 fi
 
-# --privileged serve SOLO al capitolo 21 (LVM/RAID), che tocca dispositivi a blocchi.
-# Il 22 non ne tocca nessuno — nessun losetup, nessun lvcreate, nessun mdadm — e per
-# anni di abitudine gli era stato dato lo stesso: diritti di root sull'host per un
-# esercizio che crea un utente e un file di nginx. Tolto.
-PRIV=(--cap-add NET_ADMIN --cap-add SYS_ADMIN --security-opt seccomp=unconfined)
+# Su questo host cgroup v2 e' montato read-only nei container non privilegiati:
+# systemd, che deve creare i cgroup delle unit, esce subito con 255. SYS_ADMIN e
+# seccomp=unconfined non bastano. --privileged e' quindi un prerequisito dichiarato
+# del runtime locale, non un dettaglio nascosto. Il 21 riceve un avviso aggiuntivo
+# perché, diversamente dagli altri, crea davvero dispositivi a blocchi.
+PRIV=(--privileged)
 case "$CAP" in
-    21) PRIV=(--privileged); giallo "capitolo 21: serve --privileged (dispositivi a blocchi)" ;;
+    21) giallo "capitolo 21: --privileged + dispositivi a blocchi globali al kernel" ;;
 esac
 
 verde "avvio il laboratorio…"
-# NB: niente `-v /sys/fs/cgroup:/sys/fs/cgroup`. Con cgroup v2 e --cgroupns=private
-# Docker prepara gia' un /sys/fs/cgroup scrivibile; montarci sopra quello dell'host
-# lo rende in sola lettura e systemd esce subito con 255, senza dire una parola.
+# NB: niente bind del cgroup host. Con --privileged e --cgroupns=private Docker
+# prepara un cgroup namespace scrivibile per systemd; un bind esplicito amplierebbe
+# inutilmente la superficie visibile al container.
 docker run -d --name "$NOME" \
     --cgroupns=private \
     --tmpfs /run --tmpfs /run/lock --tmpfs /tmp \
     "${PRIV[@]}" \
     -p 8080:80 -p 2222:22 \
     "$IMG" >/dev/null
+
+# La libreria di sicurezza vive nel repository ed e' copiata anche se l'immagine
+# Docker era gia' in cache: una correzione alle prove di proprieta' non deve
+# richiedere all'utente di intuire che deve ricostruire l'immagine.
+docker exec "$NOME" mkdir -p /opt/lab/lib
+docker cp "$LIB_PROPRIETA" "$NOME:/opt/lab/lib/proprieta.sh" >/dev/null
+# Le shell interattive aperte con `docker exec ... bash` non sono login shell e
+# non leggono necessariamente /etc/profile.d: i comandi del lab devono quindi
+# essere nel PATH anche senza affidarsi a un file di profilo.
+docker exec "$NOME" ln -sf /opt/lab/bin/lab /opt/lab/bin/lab-loop /usr/local/bin/
 
 printf 'attendo systemd'
 for _ in $(seq 1 30); do
@@ -209,7 +224,25 @@ done
 echo
 
 if [ -n "$CAP" ] && [ -n "$ES" ]; then
-    docker exec "$NOME" lab start "$CAP" "$ES" || true
+    case "$CAP:$ES" in
+        *[!0-9:]*|:*|*:) rosso "capitolo ed esercizio devono essere numeri (es. 17 1)"; exit 2 ;;
+    esac
+    DIR_CAPITOLO="$RADICE_REPO/content/ch$CAP"
+    [ -d "$DIR_CAPITOLO/e$ES" ] || {
+        rosso "esercizio inesistente: content/ch$CAP/e$ES"
+        exit 2
+    }
+    # L'immagine contiene il sistema e la CLI, non i contenuti: questi restano nel
+    # repository apposta, così correggere un esercizio non richiede una rebuild.
+    # Si copia l'intero capitolo (non solo eN) perché alcuni seed costruiscono il
+    # proprio mondo riusando in modo esplicito il seed dell'esercizio precedente.
+    docker cp "$DIR_CAPITOLO" "$NOME:/opt/lab/"
+    docker exec "$NOME" chmod -R 755 "/opt/lab/ch$CAP"
+    if ! docker exec "$NOME" lab start "$CAP" "$ES"; then
+        rosso "il seed di $CAP.$ES non è partito: il container resta disponibile per la diagnosi."
+        rosso "quando hai finito: $0 cleanup"
+        exit 1
+    fi
     verde "esercizio $CAP.$ES pronto. Entra con:  docker exec -it $NOME bash"
 else
     verde "pronto. Entra con:  docker exec -it $NOME bash"

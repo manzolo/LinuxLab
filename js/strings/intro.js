@@ -14,13 +14,14 @@ rimette a nuovo in mezzo secondo.</p>
 cliccarlo. Sembra un passo indietro, ed è l'esatto contrario: quello che scrivi si può
 ripetere, salvare, mandare a un collega, far eseguire ogni notte alle tre. Un clic no.</p>
 
-<p>Il programma che legge quello che scrivi si chiama <strong>shell</strong>. Fa una cosa sola,
-e la fa sempre uguale: legge una riga, la spezza sugli spazi, prende la prima parola come
-<strong>comando</strong> e le altre come <strong>istruzioni per quel comando</strong>.</p>
+<p>La finestra è il <strong>terminale</strong>; il programma che interpreta quello che scrivi si
+chiama <strong>shell</strong>. In una riga semplice riconosce un comando e i suoi argomenti, ma non
+si limita a tagliare sugli spazi: virgolette, variabili, pipe e redirezioni hanno un significato
+speciale. Li incontrerai un pezzo alla volta.</p>
 
 <pre><code>ls -l /etc
 │  │  └── argomento: su cosa lavorare
-│  └───── opzione: come farlo (le opzioni cominciano con -)
+│  └───── opzione: come farlo (spesso comincia con -)
 └──────── comando: cosa fare</code></pre>
 
 <p>Se scrivi una parola che la shell non conosce, ti risponde <code>command not found</code>.
@@ -75,13 +76,14 @@ second.</p>
 it. It looks like a step backwards, and it is the exact opposite: what you write can be
 repeated, saved, sent to a colleague, run every night at three. A click cannot.</p>
 
-<p>The program that reads what you type is called the <strong>shell</strong>. It does one thing,
-always the same way: it reads a line, splits it on spaces, takes the first word as the
-<strong>command</strong> and the rest as <strong>instructions for that command</strong>.</p>
+<p>The window is the <strong>terminal</strong>; the program interpreting what you type is the
+<strong>shell</strong>. In a simple line it recognises a command and its arguments, but it does not
+merely split on spaces: quotes, variables, pipes and redirections have special meaning. You will
+meet them one piece at a time.</p>
 
 <pre><code>ls -l /etc
 │  │  └── argument: what to work on
-│  └───── option: how to do it (options start with -)
+│  └───── option: how to do it (often starts with -)
 └──────── command: what to do</code></pre>
 
 <p>If you type a word the shell does not know, it answers <code>command not found</code>. You

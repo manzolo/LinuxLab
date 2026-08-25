@@ -5,7 +5,7 @@ export default {
         it: "Ogni processo sta in una cartella, e ogni percorso è assoluto o relativo a quella.",
         en: "Every process sits in a directory, and every path is absolute or relative to it.",
     },
-    commands: ["pwd", "cd", "ls", "ls -l", "ls -a", "ls -lh", "ls -t"],
+    commands: ["pwd", "cd", "ls", "ls -l", "ls -a", "ls -lh", "ls -t", "&&", ";"],
     glossary: ["percorso", "assoluto", "relativo", "radice", "home", "nascosto"],
 
     blocks: [
@@ -50,8 +50,11 @@ export default {
               note: { it: "I file che cominciano con un punto sono <strong>nascosti</strong>: non è sicurezza, è solo una convenzione per non intasare la vista. <code>-a</code> li mostra.",
                       en: "Files starting with a dot are <strong>hidden</strong>: it is not security, just a convention to avoid clutter. <code>-a</code> shows them." } },
             { cmd: "cd progetti && pwd", out: "/root/lab/progetti",
-              note: { it: "Percorso relativo: <code>progetti</code> viene cercato dentro la cartella corrente.",
-                      en: "Relative path: <code>progetti</code> is looked up inside the current directory." } },
+              note: { it: "Percorso relativo: <code>progetti</code> viene cercato dentro la cartella corrente. <code>&amp;&amp;</code> esegue il comando dopo solo se quello prima è riuscito; <code>;</code>, invece, li eseguirebbe entrambi comunque.",
+                      en: "Relative path: <code>progetti</code> is looked up inside the current directory. <code>&amp;&amp;</code> runs the next command only if the previous one succeeded; <code>;</code> would run both regardless." } },
+            { cmd: "pwd; ls -d .config", out: "/root/lab/progetti\n.config",
+              note: { it: "Il punto e virgola <code>;</code> separa due comandi ma non li condiziona: il secondo parte anche se il primo fallisce. Usalo quando i due risultati sono indipendenti; usa <code>&amp;&amp;</code> quando il secondo ha senso solo dopo il successo del primo.",
+                      en: "The semicolon <code>;</code> separates two commands without making one conditional: the second runs even if the first fails. Use it when the results are independent; use <code>&amp;&amp;</code> when the second only makes sense after the first succeeds." } },
             { cmd: "cd .. && pwd", out: "/root/lab",
               note: { it: "<code>..</code> è la cartella superiore, <code>.</code> è quella corrente. Esistono in ogni cartella del sistema.",
                       en: "<code>..</code> is the parent directory, <code>.</code> is the current one. They exist in every directory on the system." } },
@@ -67,11 +70,12 @@ export default {
                  <strong>stato del processo</strong>, tenuto dal kernel. Lo puoi leggere da fuori:
                  <code>ls -l /proc/$$/cwd</code> è un link simbolico che punta esattamente lì
                  (<code>$$</code> è il PID della tua shell).</p>
-                 <p>Da qui segue una cosa che sembra magia e non lo è: se cancelli la cartella in
-                 cui ti trovi, la shell <em>resta</em> lì. <code>pwd</code> continua a rispondere,
-                 ma nessun percorso relativo funziona più, perché quella directory non ha più un
-                 nome nell'albero. Su Linux una directory esiste finché qualcuno la tiene aperta —
-                 e tu la stai tenendo aperta. Basta <code>cd</code> per uscirne.</p>
+                 <p>Se un altro processo cancella la directory in cui si trova la shell, il kernel
+                 può tenerne ancora aperto l'oggetto anche se non ha più un nome raggiungibile
+                 dalla radice. Il <code>pwd</code> logico può ancora mostrare il vecchio
+                 <code>$PWD</code>, mentre <code>pwd -P</code> e alcune operazioni falliscono: è
+                 uno stato scomodo, non magia. Un <code>cd</code> verso un percorso esistente ne
+                 esce.</p>
                  <p>E <code>~</code> non lo espande <code>cd</code>: lo espande la <em>shell</em>,
                  prima ancora di eseguire il comando. Per questo <code>echo ~</code> stampa il
                  percorso della home, e per questo dentro le virgolette non funziona.</p>`,
@@ -79,12 +83,11 @@ export default {
                  state</strong>, held by the kernel. You can read it from outside:
                  <code>ls -l /proc/$$/cwd</code> is a symlink pointing exactly there
                  (<code>$$</code> is your shell's PID).</p>
-                 <p>From which follows something that looks like magic and is not: if you delete
-                 the directory you are standing in, the shell <em>stays</em> there.
-                 <code>pwd</code> keeps answering, but no relative path works any more, because
-                 that directory no longer has a name in the tree. On Linux a directory exists as
-                 long as someone holds it open — and you are holding it open. A <code>cd</code>
-                 is enough to get out.</p>
+                 <p>If another process removes the directory the shell is in, the kernel may keep
+                 the object open even though it no longer has a name reachable from the root. A
+                 logical <code>pwd</code> may still print the old <code>$PWD</code>, while
+                 <code>pwd -P</code> and some operations fail: an awkward state, not magic. Use
+                 <code>cd</code> to an existing path to leave it.</p>
                  <p>And <code>~</code> is not expanded by <code>cd</code>: it is expanded by the
                  <em>shell</em>, before the command even runs. That is why <code>echo ~</code>
                  prints the home path, and why it does not work inside quotes.</p>` } },

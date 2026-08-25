@@ -3,9 +3,9 @@ lab_fact proprietari "$(find "$s" -printf '%u:%g ' 2>/dev/null | tr ' ' '\n' | s
 lab_fact permessi_file "$(find "$s" -type f -printf '%m ' 2>/dev/null | tr ' ' '\n' | sort -u | tr '\n' ' ')"
 lab_fact permessi_cartelle "$(find "$s" -type d -printf '%m ' 2>/dev/null | tr ' ' '\n' | sort -u | tr '\n' ' ')"
 
-sbagliati=$(find "$s" ! -user web -o ! -group web 2>/dev/null | wc -l | tr -d ' ')
+sbagliati=$(find "$s" \( ! -user root -o ! -group web \) 2>/dev/null | wc -l | tr -d ' ')
 [ "$sbagliati" = "0" ] && lab_check proprietario 0 \
-    || lab_check proprietario 1 "$sbagliati elementi non web:web" "tutti web:web" "$s"
+    || lab_check proprietario 1 "$sbagliati elementi non root:web" "tutti root:web" "$s"
 
 # Invariante sui BIT, non sulla forma del comando: chmod 644 e chmod u=rw,go=r valgono uguale.
 nf=$(find "$s" -type f ! -perm 644 2>/dev/null | wc -l | tr -d ' ')

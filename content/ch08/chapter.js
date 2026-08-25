@@ -5,7 +5,7 @@ export default {
         it: "Collega i canali e impara a scrivere i file che li configurano.",
         en: "Connect the channels and learn to write the files that configure them.",
     },
-    commands: ["|", ">", ">>", "2>", "&>", "<<", "/dev/null", "tee", "xargs", "sort", "uniq -c", "vi"],
+    commands: ["NOME=valore", '"$NOME"', "$(comando)", "|", ">", ">>", "2>", "&>", "<<", "/dev/null", "tee", "xargs", "sort", "uniq -c", "vi"],
     glossary: ["stdin", "stdout", "stderr", "pipe", "redirezione", "heredoc", "editor modale"],
     competenze: ["scrittura-multilinea"],
 
@@ -39,6 +39,12 @@ export default {
                  into the good data.` } },
 
         { kind: "shown", lines: [
+            { cmd: "NOME=linux; echo \"$NOME\"", out: "linux",
+              note: { it: "<code>NOME=linux</code> assegna un valore: attorno a <code>=</code> non ci sono spazi. <code>$NOME</code> lo espande; le virgolette conservano quel risultato come un solo argomento, anche se contiene spazi.",
+                      en: "<code>NOME=linux</code> assigns a value: there are no spaces around <code>=</code>. <code>$NOME</code> expands it; quotes keep the result as one argument, even when it contains spaces." } },
+            { cmd: "OGGI=$(date +%F); echo \"$OGGI\"", out: "2026-03-04",
+              note: { it: "<code>$(comando)</code> è la <strong>sostituzione di comando</strong>: la shell esegue ciò che è nelle parentesi e sostituisce l'espressione con il suo stdout, senza gli a-capo finali. Anche qui il risultato va normalmente quotato.",
+                      en: "<code>$(command)</code> is <strong>command substitution</strong>: the shell runs what is inside the parentheses and replaces the expression with its stdout, with trailing newlines removed. Here too, the result should normally be quoted." } },
             { cmd: "ls > elenco.txt", out: "",
               note: { it: "<code>&gt;</code> manda stdout in un file, <strong>cancellando</strong> quello che c'era. <code>&gt;&gt;</code> invece accoda.",
                       en: "<code>&gt;</code> sends stdout to a file, <strong>erasing</strong> what was there. <code>&gt;&gt;</code> appends instead." } },
@@ -90,7 +96,7 @@ export default {
         { kind: "pro", html: {
             it: `<p>Perché <code>sort</code> prima di <code>uniq</code>? Perché <code>uniq</code>
                  confronta <strong>solo righe adiacenti</strong>: è un programma che legge in
-                 streaming e non tiene niente in memoria. Metterle in ordine è il modo di far
+                 streaming e deve ricordare essenzialmente solo la riga precedente. Metterle in ordine è il modo di far
                  finire vicine quelle uguali. È una limitazione, ed è anche il motivo per cui
                  funziona su file da 40 GB.</p>
                  <p>L'ordine dei simboli conta più di quanto sembri: <code>&gt; file 2&gt;&amp;1</code>
@@ -104,13 +110,14 @@ export default {
                  forma quotata è il default più sicuro; usa quella non quotata soltanto quando vuoi
                  davvero sostituire variabili della shell che sta creando il file.</p>
                  <p>E le pipe girano <strong>in parallelo</strong>, non in sequenza: i comandi
-                 partono tutti insieme e si bloccano quando il buffer da 64 KB è pieno. Per questo
+                 partono tutti insieme e si bloccano quando il buffer della pipe è pieno (spesso
+                 64 KiB su Linux, ma non è una costante portabile). Per questo
                  <code>… | head -5</code> su un file enorme è immediato: quando <code>head</code>
                  ha finito, chi sta a monte riceve un <code>SIGPIPE</code> e muore. Non ha letto
                  tutto il file: si è fermato.</p>`,
             en: `<p>Why <code>sort</code> before <code>uniq</code>? Because <code>uniq</code>
                  compares <strong>adjacent lines only</strong>: it is a streaming program that
-                 holds nothing in memory. Sorting is how you make equal lines end up next to each
+                 essentially only needs to remember the previous line. Sorting is how you make equal lines end up next to each
                  other. It is a limitation, and it is also why it works on 40 GB files.</p>
                  <p>Symbol order matters more than it looks: <code>&gt; file 2&gt;&amp;1</code>
                  sends everything to the file, but <code>2&gt;&amp;1 &gt; file</code> sends errors
@@ -123,7 +130,8 @@ export default {
                  form is the safer default; use the unquoted form only when you genuinely want the
                  shell creating the file to substitute its variables.</p>
                  <p>And pipes run <strong>in parallel</strong>, not in sequence: the commands all
-                 start together and block when the 64 KB buffer fills. That is why <code>… | head
+                 start together and block when the pipe buffer fills (often 64 KiB on Linux, but
+                 not a portable constant). That is why <code>… | head
                  -5</code> on a huge file is instant: once <code>head</code> is done, whoever is
                  upstream gets a <code>SIGPIPE</code> and dies. It did not read the whole file: it
                  stopped.</p>` } },
@@ -142,6 +150,8 @@ export default {
         ] },
 
         { kind: "recap", table: [
+            { cmd: 'NOME=valore / "$NOME"', what: { it: "assegna / usa una variabile", en: "assign / use a variable" }, flag: { it: "niente spazi attorno a <code>=</code>; quota l'espansione", en: "no spaces around <code>=</code>; quote the expansion" } },
+            { cmd: "$(comando)", what: { it: "usa lo stdout come parte del comando", en: "use stdout as part of the command" }, flag: { it: "toglie gli a-capo finali; normalmente va quotato", en: "removes trailing newlines; normally quote it" } },
             { cmd: "|", what: { it: "l'uscita di uno diventa l'entrata dell'altro", en: "one's output becomes the other's input" }, flag: { it: "il mattone di tutto il resto", en: "the building block of everything else" } },
             { cmd: "> / >>", what: { it: "scrivi su file / accoda", en: "write to file / append" }, flag: { it: "<code>&gt;</code> cancella prima. Sempre.", en: "<code>&gt;</code> erases first. Always." } },
             { cmd: "<<'EOF' / <<EOF", what: { it: "scrivi più righe letterali / espanse", en: "write multiple literal / expanded lines" }, flag: { it: "<code>EOF</code> finale da solo, senza virgolette", en: "closing <code>EOF</code> alone, without quotes" } },

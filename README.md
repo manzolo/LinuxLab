@@ -48,7 +48,9 @@ il capitolo dove lo studierai davvero, che serve a dire *«non ti sei perso una 
 
 Non è una buona intenzione, è un test: `npm test` costruisce il vocabolario cumulativo del
 percorso — quello che i capitoli fino a lì dichiarano, mostrano e riepilogano — e lo confronta
-con i comandi che compaiono nelle consegne e nei suggerimenti. Fa lo stesso con le
+con i comandi e con la grammatica shell che compaiono nelle consegne e nei suggerimenti:
+redirezioni, `&&`, `||`, `;`, assegnazioni ed espansioni, sostituzione di comando, background,
+`$!`, `$?` e `wait`. Fa lo stesso con le
 **competenze** che non sono un comando: dai file e dalle consegne deduce, per esempio, chi
 pretende la scrittura multilinea, e accetta la competenza solo se una lezione già incontrata ha
 mostrato davvero heredoc, `vi` e la via d'uscita. Se trova un buco, la build fallisce e lo
@@ -117,18 +119,30 @@ lo stesso comando `lab check`. Cambia solo chi li esegue. E la spiegazione del *
 funzionerebbero è essa stessa materia del capitolo: chi legge impara cosa serve davvero a
 systemd per esistere.
 
+Qui c'è un prerequisito esterno dichiarato, non una conoscenza nascosta: servono Git e un
+Docker già installato e avviato, capace di eseguire container Linux. Il lab non insegna a
+installare Docker perché quel passaggio cambia fra Linux, macOS e Windows; prima di iniziare
+controlla invece le capacità effettive dell'ambiente e dice cosa manca:
+
 ```bash
 git clone https://github.com/manzolo/LinuxLab && cd LinuxLab
+./lab/local/run.sh check         # Docker, cgroup v2 e moduli del kernel
 ./lab/local/run.sh 17 1          # prepara il laboratorio e l'esercizio
 docker exec -it linuxlab bash    # entra
 lab check 17 1                   # verifica
 ./lab/local/run.sh cleanup       # quando hai finito
 ```
 
-> ⚠️ Il capitolo 21 usa un container `--privileged`, e i loop device, i volumi LVM e
-> gli array RAID che crea **sono globali del tuo computer**: un `lsblk` sull'host li mostra. Per questo
-> tutto quello che il laboratorio crea si chiama `lab-*`, e `cleanup` smonta e stacca ogni
-> cosa. È scritto anche nel capitolo, perché è una cosa che va saputa e non nascosta.
+> ⚠️ I capitoli locali usano un container `--privileged`: in questo runtime Docker systemd
+> ne ha bisogno per creare i cgroup delle unit. Questo dà al root del container accesso molto
+> ampio al kernel host: esegui soltanto i comandi del lab e usa una macchina o VM di cui ti
+> fidi. Non è equivalente alla sandbox del browser.
+>
+> Il capitolo 21, in più, crea intenzionalmente loop device, volumi LVM e array RAID globali
+> al kernel Linux che esegue Docker. Su Linux nativo un
+> `lsblk` dell'host li mostra; con Docker Desktop il kernel è quello della VM interna e il
+> capitolo 21 può non essere supportato. Per questo `run.sh check` viene prima e tutto ciò che
+> il laboratorio crea si chiama `lab-*`; `cleanup` smonta e stacca ogni cosa.
 
 ## Cosa questo lab NON copre
 

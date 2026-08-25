@@ -5,7 +5,7 @@ export default {
         it: "Un processo è un numero, e tu gli parli a segnali.",
         en: "A process is a number, and you talk to it with signals.",
     },
-    commands: ["ps aux", "top", "pgrep", "pkill", "kill", "kill -9", "jobs", "bg", "fg", "&", "nohup"],
+    commands: ["ps aux", "top", "pgrep", "pkill", "kill", "kill -9", "jobs", "bg", "fg", "&", "$!", "wait", "nohup"],
     glossary: ["PID", "segnale", "SIGTERM", "SIGKILL", "zombie", "background"],
 
     blocks: [
@@ -42,8 +42,8 @@ export default {
 
         { kind: "shown", lines: [
             { cmd: "ps aux | head -3", out: "USER  PID %CPU %MEM   VSZ  RSS STAT COMMAND\nroot    1  0.0  0.1  1620  548 S    /sbin/init\nroot  412 98.3  0.2  2104  892 R    /usr/local/bin/tritatutto",
-              note: { it: "<code>%CPU</code> e <code>STAT</code> sono le colonne che contano. <code>R</code> = sta girando adesso, <code>S</code> = dorme in attesa, <code>Z</code> = zombie, <code>D</code> = bloccato sul disco.",
-                      en: "<code>%CPU</code> and <code>STAT</code> are the columns that matter. <code>R</code> = running now, <code>S</code> = sleeping, <code>Z</code> = zombie, <code>D</code> = stuck on I/O." } },
+              note: { it: "<code>%CPU</code> e <code>STAT</code> sono le colonne che contano. <code>R</code> = sta girando, <code>S</code> = dorme in attesa, <code>Z</code> = zombie, <code>D</code> = attesa kernel non interrompibile, spesso I/O.",
+                      en: "<code>%CPU</code> and <code>STAT</code> are the columns that matter. <code>R</code> = running, <code>S</code> = sleeping, <code>Z</code> = zombie, <code>D</code> = uninterruptible kernel wait, often I/O." } },
             { cmd: "pgrep -a tritatutto", out: "412 /usr/local/bin/tritatutto",
               note: { it: "Trova il PID dal nome, senza dover leggere l'elenco a occhio. <code>-a</code> mostra anche la riga di comando intera.",
                       en: "Finds the PID from the name, without reading the list by eye. <code>-a</code> also shows the full command line." } },
@@ -51,17 +51,20 @@ export default {
               note: { it: "Senza numero di segnale manda <code>SIGTERM</code>: la richiesta educata. Nella stragrande maggioranza dei casi basta questa.",
                       en: "With no signal number it sends <code>SIGTERM</code>: the polite request. In the vast majority of cases this is enough." } },
             { cmd: "ps -p 412 -o pid,stat,comm", out: "  PID STAT COMMAND\n  412 R    tritatutto",
-              note: { it: "Ancora vivo: questo programma <strong>intercetta</strong> SIGTERM e sceglie di ignorarlo. È legittimo — è così che i database rifiutano di morire a metà di una scrittura.",
-                      en: "Still alive: this program <strong>traps</strong> SIGTERM and chooses to ignore it. That is legitimate — it is how databases refuse to die mid-write." } },
+              note: { it: "Ancora vivo: questa demo <strong>intercetta</strong> SIGTERM e sceglie di ignorarlo. I demoni reali normalmente lo gestiscono per chiudere con ordine; se un processo resta vivo può stare completando il lavoro, essere bloccato oppure avere un gestore difettoso: prima si osserva, poi si forza.",
+                      en: "Still alive: this demo <strong>traps</strong> SIGTERM and chooses to ignore it. Real daemons normally handle it to shut down cleanly; a process that stays alive may be finishing work, blocked, or have a faulty handler: observe first, then force it." } },
             { cmd: "kill -9 412 && ps -p 412", out: "  PID TTY   TIME CMD",
               note: { it: "<code>-9</code> non lo esegue il processo: lo esegue il kernel. Per questo non si può ignorare — e per questo il programma non ha salvato niente.",
                       en: "<code>-9</code> is not executed by the process: it is executed by the kernel. That is why it cannot be ignored — and why the program saved nothing." } },
             { cmd: "pkill -f tritatutto", out: "",
               note: { it: "<code>kill</code> vuole un numero, <code>pkill</code> vuole un nome. <code>-f</code> confronta <strong>l'intera riga di comando</strong>, non solo il nome del programma: comodo, e pericoloso. Guarda sempre prima chi colpiresti, con <code>pgrep -af</code>.",
                       en: "<code>kill</code> wants a number, <code>pkill</code> wants a name. <code>-f</code> matches <strong>the whole command line</strong>, not just the program name: handy, and dangerous. Always look first at who you would hit, with <code>pgrep -af</code>." } },
-            { cmd: "sleep 300 &", out: "[1] 1043",
-              note: { it: "La <code>&amp;</code> in fondo non aspetta: il comando parte e il prompt torna <em>subito</em>. Fra parentesi quadre il numero del lavoro, poi il PID. <code>sleep</code> è il programma più inutile che esista — non fa niente per N secondi — ed è per questo che è perfetto per esercitarsi sui processi.",
-                      en: "The trailing <code>&amp;</code> does not wait: the command starts and the prompt comes back <em>immediately</em>. In square brackets the job number, then the PID. <code>sleep</code> is the most useless program there is — it does nothing for N seconds — which is exactly why it is perfect for practising on processes." } },
+            { cmd: "sleep 300 & echo \"PID: $!\"", out: "[1] 1043\nPID: 1043",
+              note: { it: "La <code>&amp;</code> non aspetta: il comando parte e la shell prosegue <em>subito</em>. Fra parentesi quadre vedi il numero del job e poi il PID; <code>$!</code> conserva il PID dell'ultimo processo avviato in background.",
+                      en: "<code>&amp;</code> does not wait: the command starts and the shell carries on <em>immediately</em>. In square brackets you see the job number and then the PID; <code>$!</code> holds the PID of the last background process." } },
+            { cmd: "sleep 1 & wait $!; echo finito", out: "[2] 1051\nfinito",
+              note: { it: "<code>wait PID</code> fa il contrario: ferma lo script finché quel processo termina e ne restituisce il codice di uscita. È così che sincronizzi un lavoro parallelo prima di usare il suo risultato.",
+                      en: "<code>wait PID</code> does the opposite: it pauses the script until that process ends and returns its exit status. This is how you synchronize parallel work before using its result." } },
         ] },
 
         { kind: "lab" },
@@ -76,7 +79,8 @@ export default {
                  <p>Lo <strong>zombie</strong> (<code>Z</code>) è il caso opposto e viene sempre
                  frainteso: è già morto. Resta in tabella solo perché suo padre non ha ancora
                  chiamato <code>wait()</code> per raccoglierne il codice di uscita. Non consuma
-                 CPU né memoria, e <strong>non si può uccidere</strong> — è già morto. Se se ne
+                 CPU né conserva il proprio spazio di memoria, ma occupa ancora una voce nella
+                 tabella dei processi; <strong>non si può uccidere</strong> — è già morto. Se se ne
                  accumulano a migliaia, il colpevole è il padre, ed è lui che va riavviato.</p>
                  <p>Infine il motivo per cui <code>&amp;</code> spesso non basta: un processo in
                  background resta figlio del tuo terminale, e quando chiudi la sessione riceve
@@ -92,7 +96,8 @@ export default {
                  <p>The <strong>zombie</strong> (<code>Z</code>) is the opposite case and is always
                  misunderstood: it is already dead. It stays in the table only because its parent
                  has not yet called <code>wait()</code> to collect its exit code. It uses no CPU
-                 and no memory, and <strong>cannot be killed</strong> — it is already dead. If
+                 and retains no process address space, but still occupies a process-table entry;
+                 it <strong>cannot be killed</strong> — it is already dead. If
                  thousands pile up, the culprit is the parent, and the parent is what needs
                  restarting.</p>
                  <p>Finally, why <code>&amp;</code> is often not enough: a background process stays
@@ -116,7 +121,7 @@ export default {
             { cmd: "pgrep -a", what: { it: "il PID a partire dal nome", en: "the PID from the name" }, flag: { it: "guarda sempre prima di usare <code>pkill</code>", en: "always look before using <code>pkill</code>" } },
             { cmd: "kill", what: { it: "chiedi di chiudere (SIGTERM)", en: "ask to shut down (SIGTERM)" }, flag: { it: "la prima cosa da provare", en: "the first thing to try" } },
             { cmd: "kill -9", what: { it: "stacca la corrente (SIGKILL)", en: "pull the plug (SIGKILL)" }, flag: { it: "l'ultima spiaggia, e non salva niente", en: "last resort, and it saves nothing" } },
-            { cmd: "cmd &", what: { it: "lancia in background", en: "run in background" }, flag: { it: "<code>jobs</code>, <code>fg</code>, e <code>nohup</code> per sopravvivere al logout", en: "<code>jobs</code>, <code>fg</code>, and <code>nohup</code> to survive logout" } },
+            { cmd: "cmd & / $! / wait", what: { it: "avvia, ricorda il PID, attendi", en: "start, retain the PID, wait" }, flag: { it: "<code>jobs</code>/<code>fg</code> sono per la sessione; per un servizio usa systemd", en: "<code>jobs</code>/<code>fg</code> are session tools; use systemd for a service" } },
         ] },
     ],
 
@@ -156,8 +161,8 @@ export default {
             },
             checks: [
                 { id: "processo-fermo",
-                  why: { it: "Questo programma intercetta <code>SIGTERM</code> e lo ignora, come farebbe un database che non vuole morire a metà di una scrittura. È la ragione per cui <code>kill -9</code> esiste — e l'hai scoperta da solo invece che sentirtelo dire.",
-                         en: "This program traps <code>SIGTERM</code> and ignores it, the way a database refusing to die mid-write would. That is why <code>kill -9</code> exists — and you found it out yourself instead of being told." },
+                  why: { it: "Questa demo è deliberatamente ostinata: intercetta <code>SIGTERM</code> e lo ignora. I servizi reali dovrebbero usarlo per chiudere con ordine, ma possono bloccarsi o avere bug: per questo <code>kill -9</code> esiste come ultima risorsa.",
+                         en: "This demo is deliberately stubborn: it traps <code>SIGTERM</code> and ignores it. Real services should use it for a clean shutdown, but they can hang or contain bugs: that is why <code>kill -9</code> exists as a last resort." },
                   nudge: { it: "<code>ps -p PID -o pid,stat,comm</code> dopo il primo <code>kill</code>: se è ancora lì, il segnale è stato ricevuto e scartato.",
                            en: "<code>ps -p PID -o pid,stat,comm</code> after the first <code>kill</code>: if it is still there, the signal was received and discarded." } },
             ],

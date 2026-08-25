@@ -17,7 +17,9 @@ fi
 mkdir -p /etc/crontabs /var/spool/cron
 [ -d /var/spool/cron/crontabs ] || ln -sfn /etc/crontabs /var/spool/cron/crontabs
 systemctl disable --now guardiano >/dev/null 2>&1 || true
+systemctl disable nftables >/dev/null 2>&1 || true
 rm -f /etc/systemd/system/guardiano.service
+rm -f /etc/nftables.conf
 systemctl daemon-reload >/dev/null 2>&1 || true
 userdel -r appsrv >/dev/null 2>&1 || true
 rm -rf /srv/sito /usr/local/bin/backup.sh
@@ -48,10 +50,10 @@ case "$riga" in *nologin*|*/bin/false) lab_check utente 0 ;;
 # 2 — permessi (invariante sui bit, non sul comando usato)
 nf=$(find /srv/sito -type f ! -perm 644 2>/dev/null | wc -l | tr -d ' ')
 nd=$(find /srv/sito -type d ! -perm 755 2>/dev/null | wc -l | tr -d ' ')
-no=$(find /srv/sito ! -user appsrv 2>/dev/null | wc -l | tr -d ' ')
-lab_fact permessi "file_sbagliati=$nf cartelle_sbagliate=$nd non_appsrv=$no"
+no=$(find /srv/sito \( ! -user root -o ! -group www-data \) 2>/dev/null | wc -l | tr -d ' ')
+lab_fact permessi "file_sbagliati=$nf cartelle_sbagliate=$nd non_root_wwwdata=$no"
 if [ -f /srv/sito/index.html ] && [ "$nf" = 0 ] && [ "$nd" = 0 ] && [ "$no" = 0 ]; then lab_check permessi 0
-else lab_check permessi 1 "file=$nf dir=$nd owner=$no" "tutto 644/755 e di appsrv" "/srv/sito"; fi
+else lab_check permessi 1 "file=$nf dir=$nd owner_o_gruppo=$no" "tutto 644/755 e root:www-data" "/srv/sito"; fi
 
 # 3 — il sito risponde davvero
 body=$(curl -s --max-time 5 http://localhost/ 2>/dev/null)
@@ -62,9 +64,12 @@ else lab_check sito 1 "$(echo "${body:-(nessuna risposta)}" | head -c 40)" "il c
 
 # 4 — servizio attivo E abilitato
 a=$(systemctl is-active guardiano 2>/dev/null); e=$(systemctl is-enabled guardiano 2>/dev/null)
-lab_fact guardiano "active=${a:-?} enabled=${e:-?}"
-if [ "$a" = active ] && [ "$e" = enabled ]; then lab_check servizio 0
-else lab_check servizio 1 "active=${a:-?} enabled=${e:-?}" "active + enabled"; fi
+u=$(systemctl show guardiano -p User --value 2>/dev/null)
+p=$(systemctl show guardiano -p MainPID --value 2>/dev/null)
+pu=$(ps -o user= -p "${p:-0}" 2>/dev/null | tr -d ' ')
+lab_fact guardiano "active=${a:-?} enabled=${e:-?} User=${u:-?} processo=${pu:-?}"
+if [ "$a" = active ] && [ "$e" = enabled ] && [ "$u" = appsrv ] && [ "$pu" = appsrv ]; then lab_check servizio 0
+else lab_check servizio 1 "active=${a:-?} enabled=${e:-?} User=${u:-?} processo=${pu:-?}" "active + enabled, eseguito da appsrv"; fi
 
 # 5 — backup pianificato: campi del cron, non la stringa
 riga=$(crontab -l 2>/dev/null | grep -v '^[[:space:]]*#' | grep backup.sh | head -1)
@@ -85,6 +90,14 @@ else lab_check backup 1 "min=${m:-?} ora=${h:-?} ${dom:-?} ${mon:-?} ${dow:-?} s
 # passerebbe qualunque lettura del testo. (Revisione esterna del 2026-08-16.)
 rs=$(nft list ruleset 2>/dev/null)
 lab_fact firewall "$(echo "$rs" | tr '\n' ' ' | head -c 130)"
+persistente=no
+abilitato=$(systemctl is-enabled nftables 2>/dev/null)
+if [ -f /etc/nftables.conf ] && nft -c -f /etc/nftables.conf >/dev/null 2>&1 \
+   && grep -qE 'table[[:space:]]+inet[[:space:]]+lab' /etc/nftables.conf \
+   && grep -q 'policy drop' /etc/nftables.conf \
+   && grep -q '22' /etc/nftables.conf && grep -q '80' /etc/nftables.conf \
+   && [ "$abilitato" = enabled ]; then persistente=si; fi
+lab_fact firewall_persistenza "config_valida_e_coerente=$persistente servizio=${abilitato:-?}"
 ip netns del lab-sonda 2>/dev/null || true; ip link del lab-a 2>/dev/null || true
 sonda=no
 if ip netns add lab-sonda 2>/dev/null && ip link add lab-a type veth peer name lab-b 2>/dev/null \
@@ -103,8 +116,8 @@ bussa() {   # "risponde" | "rifiuta" | "silenzio"
 if [ "$sonda" = si ]; then
     p22=$(bussa 22); p80=$(bussa 80); p3306=$(bussa 3306)
     lab_fact bussato "22=$p22 80=$p80 3306=$p3306"
-    if [ "$p22" != silenzio ] && [ "$p80" != silenzio ] && [ "$p3306" = silenzio ]; then lab_check firewall 0
-    else lab_check firewall 1 "22=$p22 80=$p80 3306=$p3306" "22 e 80 raggiungibili, 3306 nel silenzio"; fi
+    if [ "$p22" != silenzio ] && [ "$p80" != silenzio ] && [ "$p3306" = silenzio ] && [ "$persistente" = si ]; then lab_check firewall 0
+    else lab_check firewall 1 "22=$p22 80=$p80 3306=$p3306 persistente=$persistente servizio=${abilitato:-?}" "22 e 80 raggiungibili, 3306 nel silenzio, configurazione valida e nftables abilitato"; fi
 else
     # Come al capitolo 20: niente ripiego silenzioso su una lettura del testo.
     lab_fact sonda "NON creata: manca ip/netns o i permessi (serve --cap-add NET_ADMIN)"
@@ -115,6 +128,6 @@ ip netns del lab-sonda 2>/dev/null || true; ip link del lab-a 2>/dev/null || tru
 # PRO — idempotenza: la seconda esecuzione non deve rompere niente ne' duplicare
 righe_cron=$(crontab -l 2>/dev/null | grep -c backup.sh)
 lab_fact righe_cron_backup "$righe_cron"
-if [ "$rc2" -eq 0 ] && [ "$righe_cron" -le 1 ]; then lab_check idempotente 0
-else lab_check idempotente 1 "seconda esecuzione codice=$rc2, righe cron=$righe_cron" "codice 0 e una sola riga" ; fi
+if [ "$rc1" -eq 0 ] && [ "$rc2" -eq 0 ] && [ "$righe_cron" -eq 1 ]; then lab_check idempotente 0
+else lab_check idempotente 1 "prima=$rc1 seconda=$rc2, righe cron=$righe_cron" "entrambe codice 0 e una sola riga" ; fi
 lab_done

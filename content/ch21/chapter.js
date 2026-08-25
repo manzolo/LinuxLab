@@ -5,7 +5,7 @@ export default {
         it: "Il disco smette di essere una cosa sola.",
         en: "The disk stops being one single thing.",
     },
-    commands: ["pvcreate", "vgcreate", "lvcreate", "lvextend", "resize2fs", "mdadm", "lsblk"],
+    commands: ["pvcreate", "vgcreate", "lvcreate", "lvextend", "resize2fs", "mdadm", "sync", "lsblk"],
     glossary: ["PV", "VG", "LV", "RAID1", "degradato", "a caldo"],
 
     blocks: [
@@ -20,8 +20,8 @@ export default {
         { kind: "local", html: {
             it: `<p>Questo capitolo tocca <strong>dispositivi a blocchi</strong>, e va detto con
                  chiarezza: il container gira <code>--privileged</code>, e i volumi LVM e gli array
-                 RAID <strong>sono globali del tuo computer</strong>. Un <code>lsblk</code>
-                 sull'host li mostra. Per questo tutto quello che creiamo si chiama
+                 RAID <strong>sono globali al kernel Linux che esegue Docker</strong>. Su Linux
+                 nativo un <code>lsblk</code> dell'host li mostra. Per questo tutto quello che creiamo si chiama
                  <code>lab-</code> qualcosa, e <code>./lab/local/run.sh cleanup</code> smonta,
                  disattiva e stacca ogni cosa.</p>
                  <p>Lavoriamo su <strong>file trasformati in dischi</strong> con
@@ -29,8 +29,8 @@ export default {
                  insieme. Non tocchiamo nessun disco vero, e non partizioniamo niente.</p>`,
             en: `<p>This chapter touches <strong>block devices</strong>, and it must be said
                  plainly: the container runs <code>--privileged</code>, and LVM volumes and RAID
-                 arrays <strong>are global to your computer</strong>. An <code>lsblk</code> on the
-                 host will show them. That is why everything we create is called
+                 arrays <strong>are global to the Linux kernel running Docker</strong>. On native
+                 Linux, host <code>lsblk</code> will show them. That is why everything we create is called
                  <code>lab-</code>something, and <code>./lab/local/run.sh cleanup</code> unmounts,
                  deactivates and detaches all of it.</p>
                  <p>We work on <strong>files turned into disks</strong> with <code>losetup</code> —
@@ -42,14 +42,16 @@ export default {
         { kind: "lead", html: {
             it: `Due idee separate che spesso si confondono. <strong>LVM</strong> serve a
                  <em>ridimensionare</em>: mette i dischi in un magazzino comune e ne ritaglia
-                 volumi che puoi allargare quando vuoi. <strong>RAID</strong> serve a
-                 <em>sopravvivere</em>: scrive gli stessi dati su più dischi, così se uno muore i
-                 dati restano. Si usano spesso insieme, ma risolvono problemi diversi.`,
+                 volumi che puoi allargare finché il gruppo ha spazio e il filesystem lo supporta.
+                 <strong>RAID</strong> combina più dischi per prestazioni e/o ridondanza; nel RAID1
+                 di questo lab gli stessi blocchi vivono su due membri, così un guasto non ferma i
+                 dati. Si usano spesso insieme, ma risolvono problemi diversi.`,
             en: `Two separate ideas that often get confused. <strong>LVM</strong> is about
                  <em>resizing</em>: it pools disks into a common store and carves out volumes you
-                 can grow whenever you like. <strong>RAID</strong> is about <em>surviving</em>: it
-                 writes the same data to several disks, so if one dies the data remains. They are
-                 often used together, but they solve different problems.` } },
+                 can grow while the group has free space and the filesystem supports it.
+                 <strong>RAID</strong> combines disks for performance and/or redundancy; in this
+                 lab's RAID1 the same blocks live on two members, so one failure does not stop the
+                 data. They are often used together, but they solve different problems.` } },
 
         { kind: "analogy", html: {
             it: `LVM è un <strong>magazzino con scaffali mobili</strong>. I dischi fisici (PV) sono
@@ -84,33 +86,37 @@ export default {
                    exists, doing both at once — and it is the form worth learning right away.` } },
 
         { kind: "pro", html: {
-            it: `<p><strong>Allargare è sicuro, rimpicciolire no.</strong> Estendere un LV e poi il
-                 filesystem si fa a caldo, con il volume montato e in uso. Ridurre richiede
-                 l'ordine inverso (prima il filesystem, poi il volume), spesso a freddo, e un
-                 errore di ordine <em>tronca i dati</em>. La regola pratica: si creano volumi
-                 piccoli e si allargano quando servono, mai il contrario.</p>
+            it: `<p><strong>Allargare è in genere più semplice; ridurre è più rischioso.</strong>
+                 Un LV si può estendere a caldo e ext4 può crescere mentre è montato; altri
+                 filesystem hanno capacità diverse. Ridurre richiede l'ordine inverso (prima il
+                 filesystem, poi il volume), spesso a freddo, e un errore di ordine può
+                 <em>troncare i dati</em>; alcuni filesystem, come XFS, non supportano affatto la
+                 riduzione. La regola pratica: backup, verifica del filesystem e procedura
+                 specifica prima di toccare le dimensioni.</p>
                  <p><strong>RAID non è un backup</strong>, ed è la cosa più importante di questo
                  capitolo. RAID1 protegge da un disco che si rompe. Non protegge da un
                  <code>rm -rf</code>, da un ransomware o da un errore di configurazione: quelli
                  vengono scritti fedelmente su <em>tutti</em> i dischi, all'istante. Servono
                  entrambi, e servono per cose diverse.</p>
-                 <p>Il pezzo che quasi tutti dimenticano: un array degradato non lo dice nessuno.
-                 Va monitorato — <code>mdadm --monitor</code>, o un controllo su
+                 <p>Il pezzo che quasi tutti dimenticano: un array degradato non ti avvisa da solo
+                 se nessuno ha configurato il monitoraggio — <code>mdadm --monitor</code>, o un controllo su
                  <code>/proc/mdstat</code> — altrimenti scopri che un disco è morto il giorno in
                  cui muore anche il secondo. Un RAID senza monitoraggio è un RAID che ti farà
                  credere di essere protetto proprio mentre non lo sei più.</p>`,
-            en: `<p><strong>Growing is safe, shrinking is not.</strong> Extending an LV and then the
-                 filesystem happens hot, with the volume mounted and in use. Shrinking requires the
-                 reverse order (filesystem first, then volume), often cold, and getting the order
-                 wrong <em>truncates your data</em>. The practical rule: create small volumes and
-                 grow them when needed, never the other way round.</p>
+            en: `<p><strong>Growing is generally simpler; shrinking is riskier.</strong> An LV can
+                 be extended live and ext4 can grow while mounted; other filesystems have different
+                 capabilities. Shrinking requires the reverse order (filesystem first, then
+                 volume), often cold, and getting the order wrong can <em>truncate your data</em>;
+                 some filesystems, such as XFS, cannot shrink at all. The practical rule is to
+                 back up, identify the filesystem, and follow its specific procedure before
+                 changing sizes.</p>
                  <p><strong>RAID is not a backup</strong>, and that is the most important thing in
                  this chapter. RAID1 protects against a disk breaking. It does not protect against
                  an <code>rm -rf</code>, ransomware or a misconfiguration: those get written
                  faithfully to <em>every</em> disk, instantly. You need both, and they are for
                  different things.</p>
-                 <p>The piece almost everyone forgets: nobody announces a degraded array. It must be
-                 monitored — <code>mdadm --monitor</code>, or a check on <code>/proc/mdstat</code>
+                 <p>The piece almost everyone forgets: a degraded array will not alert you by itself
+                 unless monitoring is configured — <code>mdadm --monitor</code>, or a check on <code>/proc/mdstat</code>
                  — otherwise you discover one disk died on the day the second one does too. An
                  unmonitored RAID is a RAID that will make you feel protected exactly while you are
                  not.</p>` } },
@@ -129,6 +135,7 @@ export default {
             { cmd: "lvcreate -L", what: { it: "ritaglia un volume", en: "carve out a volume" }, flag: { it: "creali piccoli: allargare è facile", en: "make them small: growing is easy" } },
             { cmd: "lvextend -r -L +N", what: { it: "allarga volume e filesystem", en: "grow volume and filesystem" }, flag: { it: "la <code>-r</code> è quella che ti evita il bug", en: "<code>-r</code> is what saves you the bug" } },
             { cmd: "mdadm --create", what: { it: "crea un array", en: "create an array" }, flag: { it: "<code>--detail</code> per lo stato, e va monitorato", en: "<code>--detail</code> for status, and it must be monitored" } },
+            { cmd: "mdadm --fail / --remove", what: { it: "simula il guasto e sfila un membro", en: "simulate failure and remove a member" }, flag: { it: "prima controlla sempre <code>--detail</code>", en: "always inspect <code>--detail</code> first" } },
             { cmd: "cat /proc/mdstat", what: { it: "lo stato degli array, in una riga", en: "array status, in one line" }, flag: { it: "è quello che deve guardare il tuo monitoraggio", en: "this is what your monitoring should watch" } },
         ] },
     ],
@@ -202,6 +209,40 @@ export default {
                 { it: "Il comando per allargare un volume logico è <code>lvextend</code>.", en: "The command to grow a logical volume is <code>lvextend</code>." },
                 { it: "L'opzione <code>-r</code> ridimensiona anche il filesystem, in un colpo solo.", en: "The <code>-r</code> option resizes the filesystem too, in one go." },
                 { it: "<code>lvextend -r -L 120M /dev/lab-vg/lab-dati</code>", en: "<code>lvextend -r -L 120M /dev/lab-vg/lab-dati</code>" },
+            ],
+        },
+        {
+            id: "e3", tipo: "stato",
+            brief: {
+                it: `Costruisci e rompi in modo controllato un <strong>RAID1</strong>. Il seed ha
+                     preparato due file-disco: crea <code>/dev/md/lab-raid</code> con entrambi,
+                     formattalo ext4, montalo su <code>/mnt/raid</code> e scrivi
+                     <code>ridondante</code> in <code>/mnt/raid/prova.txt</code>. Poi marca uno dei
+                     due membri come guasto e rimuovilo dall'array. Alla fine l'array deve essere
+                     degradato ma montato, e il file ancora leggibile. Sono dischi finti del lab:
+                     non usare altri dispositivi.`,
+                en: `Build and safely break a <strong>RAID1</strong>. The seed prepared two
+                     disk-files: create <code>/dev/md/lab-raid</code> from both, format it as ext4,
+                     mount it on <code>/mnt/raid</code>, and write <code>ridondante</code> to
+                     <code>/mnt/raid/prova.txt</code>. Then mark one member faulty and remove it
+                     from the array. At the end the array must be degraded but mounted, with the
+                     file still readable. These are the lab's fake disks: use no other devices.`,
+            },
+            checks: [
+                { id: "raid1-creato",
+                  why: { it: "RAID1 replica gli stessi blocchi su due membri. Il check legge i metadati dell'array: due file separati o RAID0 non sono equivalenti.", en: "RAID1 mirrors the same blocks across two members. The check reads the array metadata: two separate files or RAID0 are not equivalent." },
+                  nudge: { it: "<code>mdadm --detail /dev/md/lab-raid</code>: cerca <code>Raid Level : raid1</code> e <code>Raid Devices : 2</code>.", en: "<code>mdadm --detail /dev/md/lab-raid</code>: look for <code>Raid Level : raid1</code> and <code>Raid Devices : 2</code>." } },
+                { id: "degradato",
+                  why: { it: "Il guasto controllato rende visibile la promessa del mirror: con un solo membro attivo lo stato è degradato, non distrutto. Adesso servirebbero allarme e sostituzione.", en: "The controlled failure makes the mirror's promise visible: with one active member the state is degraded, not destroyed. In reality, alerting and replacement must follow." },
+                  nudge: { it: "Dopo aver identificato un loop del lab: <code>mdadm /dev/md/lab-raid --fail /dev/loopX --remove /dev/loopX</code>, poi rileggi <code>--detail</code>.", en: "After identifying one lab loop: <code>mdadm /dev/md/lab-raid --fail /dev/loopX --remove /dev/loopX</code>, then inspect <code>--detail</code> again." } },
+                { id: "dati-letti",
+                  why: { it: "La ridondanza conta solo se il filesystem resta montato e i dati sono leggibili dopo il guasto. È una prova di disponibilità, non un backup contro cancellazioni.", en: "Redundancy only matters if the filesystem stays mounted and data remains readable after failure. This proves availability, not backup against deletion." },
+                  nudge: { it: "<code>findmnt /mnt/raid</code> deve indicare l'array; <code>cat /mnt/raid/prova.txt</code> deve ancora stampare <code>ridondante</code>.", en: "<code>findmnt /mnt/raid</code> must name the array; <code>cat /mnt/raid/prova.txt</code> must still print <code>ridondante</code>." } },
+            ],
+            hints: [
+                { it: "I due membri sono elencati in <code>/opt/lab/state/loop-raid</code>. Guardali con <code>cat</code>; non scegliere mai un disco a intuito.", en: "The two members are listed in <code>/opt/lab/state/loop-raid</code>. Inspect them with <code>cat</code>; never pick a disk by guesswork." },
+                { it: "Crea il mirror con <code>mdadm --create /dev/md/lab-raid --level=1 --raid-devices=2 DISCO1 DISCO2</code>, poi usa gli stessi <code>mkfs.ext4</code> e <code>mount</code> del capitolo 13.", en: "Create the mirror with <code>mdadm --create /dev/md/lab-raid --level=1 --raid-devices=2 DISK1 DISK2</code>, then use the same <code>mkfs.ext4</code> and <code>mount</code> from chapter 13." },
+                { it: "Solo dopo aver scritto il file: <code>sync</code> chiede al kernel di scaricare sui dispositivi le scritture in attesa; quindi usa <code>mdadm /dev/md/lab-raid --fail DISCO2 --remove DISCO2</code>. Non fermare l'array: deve restare montato.", en: "Only after writing the file: <code>sync</code> asks the kernel to flush pending writes to the devices; then use <code>mdadm /dev/md/lab-raid --fail DISK2 --remove DISK2</code>. Do not stop the array: it must stay mounted." },
             ],
         },
     ],

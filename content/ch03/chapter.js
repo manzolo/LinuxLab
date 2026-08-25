@@ -103,7 +103,7 @@ export default {
             { cmd: "cp", what: { it: "copia", en: "copy" }, flag: { it: "<code>-r</code> per le cartelle, <code>-a</code> preserva tutto", en: "<code>-r</code> for directories, <code>-a</code> preserves everything" } },
             { cmd: "mv", what: { it: "sposta o rinomina", en: "move or rename" }, flag: { it: "è lo stesso comando: rinominare è spostare nello stesso posto", en: "same command: renaming is moving in place" } },
             { cmd: "rm", what: { it: "cancella", en: "delete" }, flag: { it: "<code>-r</code> ricorsivo, <code>-i</code> chiede conferma", en: "<code>-r</code> recursive, <code>-i</code> asks first" } },
-            { cmd: "ln -s", what: { it: "crea una scorciatoia", en: "create a shortcut" }, flag: { it: "usa sempre percorsi assoluti, o si rompe se sposti il link", en: "always use absolute paths, or it breaks when you move the link" } },
+            { cmd: "ln -s", what: { it: "crea una scorciatoia", en: "create a shortcut" }, flag: { it: "assoluto: stabile rispetto al link; relativo: portabile insieme all'albero", en: "absolute: stable relative to the link; relative: portable with the tree" } },
         ] },
     ],
 
@@ -174,7 +174,7 @@ export default {
                      file. <strong>A link, not a copy</strong>: the check tests that too.`,
             },
             attrezzi: [
-                { cmd: "$(comando)", cap: 16, cosa: {
+                { cmd: "$(comando)", cap: 8, cosa: {
                     it: "le parentesi con il dollaro davanti eseguono un comando e <strong>mettono al suo posto quello che ha stampato</strong>. Servono quando un comando ha bisogno del risultato di un altro come argomento.",
                     en: "the parentheses with a dollar in front run a command and <strong>put whatever it printed in their place</strong>. You need them when one command takes another's result as an argument." } },
             ],
@@ -193,7 +193,7 @@ export default {
             hints: [
                 { it: "Serve prima sapere <em>quale</em> è il più recente: il capitolo 2 ha l'opzione giusta di <code>ls</code>.", en: "First you need to know <em>which</em> is newest: chapter 2 has the right <code>ls</code> option." },
                 { it: "<code>ln -s bersaglio nome-del-link</code> — in quest'ordine.", en: "<code>ln -s target link-name</code> — in that order." },
-                { it: "<code>cd ~/lab/registri &amp;&amp; ln -s \"$(ls -t *.log | head -1)\" ultimo</code>", en: "<code>cd ~/lab/registri &amp;&amp; ln -s \"$(ls -t *.log | head -1)\" ultimo</code>" },
+                { it: "Entra in <code>~/lab/registri</code>, copia il primo nome restituito da <code>ls -t *.log</code> e usalo in <code>ln -s NOME ultimo</code>. La sostituzione automatica di un comando arriverà al capitolo 8.", en: "Enter <code>~/lab/registri</code>, copy the first name returned by <code>ls -t *.log</code>, and use it in <code>ln -s NAME ultimo</code>. Automatic command substitution comes in chapter 8." },
             ],
         },
     ],

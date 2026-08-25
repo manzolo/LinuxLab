@@ -125,6 +125,55 @@ test("nessun esercizio chiede quello che il lab non ha ancora spiegato", async (
         "va aggiunto un `attrezzi: [{cmd, cap, cosa:{it,en}}]` all'esercizio, oppure il comando va insegnato nel capitolo");
 });
 
+test("l'audit riconosce la grammatica della shell, non solo i nomi dei comandi", async () => {
+    const { tokenDi } = await import(path.join(ROOT, "tools/vocabolario.mjs"));
+    const casi = [
+        ["cd dir && pwd", ["&&"]],
+        ["false || echo errore", ["||"]],
+        ["pwd; ls", [";"]],
+        ['OGGI=$(date); echo "$OGGI"', ["VAR=", "$(", "$VAR", ";"]],
+        ["sleep 1 & echo $!; wait $!", ["&", "$!", ";", "wait"]],
+        ["comando; echo $?", [";", "$?"]],
+    ];
+    for (const [riga, attesi] of casi) {
+        const visti = tokenDi(riga);
+        for (const tok of attesi) assert.ok(visti.has(tok), `${riga}: non riconosce ${tok}`);
+    }
+    assert.ok(!tokenDi("false || true").has("|"), "|| non deve essere scambiato per una pipe");
+    assert.ok(!tokenDi("cd x && pwd").has("&"), "&& non deve essere scambiato per background");
+    assert.ok(!tokenDi("dd if=/dev/zero of=disco.img").has("VAR="),
+        "gli argomenti nome=valore di un comando non sono assegnazioni della shell");
+});
+
+test("regressione: togliere un gradino di grammatica scopre chi lo usa", async () => {
+    const { scoperti, tokenDi } = await import(path.join(ROOT, "tools/vocabolario.mjs"));
+    const sani = capitoliCaricati.filter(c => !c.__errore);
+    const casi = [
+        ["ch02", "&&"], ["ch02", ";"],
+        ["ch08", "VAR="], ["ch08", "$VAR"],
+        ["ch11", "$!"], ["ch11", "wait"],
+        ["ch16", "||"], ["ch16", "$?"],
+    ];
+    const contiene = (testo, tok) => tokenDi(testo || "").has(tok);
+    for (const [capId, tok] of casi) {
+        // Uno stesso costrutto può essere rimostrato più avanti. Per provare che il
+        // controllo morde davvero lo si rimuove da tutte le superfici didattiche,
+        // lasciandolo però nelle consegne e nei suggerimenti che lo richiedono.
+        const rotti = sani.map(cap => ({
+            ...cap,
+            commands: (cap.commands || []).filter(c => !contiene(c, tok)),
+            blocks: (cap.blocks || []).map(b => b.kind === "shown" ? {
+                ...b, lines: (b.lines || []).filter(l => !contiene(l.cmd, tok)),
+            } : b.kind === "recap" ? {
+                ...b, table: (b.table || []).filter(r => !contiene(r.cmd, tok)),
+            } : b),
+        }));
+        const buchi = scoperti(rotti).flatMap(b => b.mancanti.map(m => m.tok));
+        assert.ok(buchi.includes(tok),
+            `togliendo ${tok} da ${capId}, l'audit deve trovare almeno un consumatore scoperto`);
+    }
+});
+
 test("nessun attrezzo dichiarato per cose gia' insegnate", async () => {
     const { attrezziInutili } = await import(path.join(ROOT, "tools/vocabolario.mjs"));
     const stantii = attrezziInutili(capitoliCaricati.filter(c => !c.__errore));

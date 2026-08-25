@@ -88,11 +88,12 @@ export default {
                  <p>Sull'autenticazione a chiave: il concetto che sblocca tutto è che
                  <strong>la chiave privata non lascia mai il tuo computer</strong>. Sul server
                  metti solo quella pubblica, in <code>~/.ssh/authorized_keys</code>. Da cui il
-                 vincolo sui permessi che fa impazzire tutti: sshd <strong>rifiuta</strong> di
-                 usare quel file se la home o <code>.ssh</code> sono scrivibili dal gruppo o da
-                 altri. Non è un bug, è una difesa: se un altro utente può scrivere nel tuo
-                 <code>authorized_keys</code>, può entrare come te. Servono
-                 <code>700</code> su <code>.ssh</code> e <code>600</code> sul file.</p>
+                 vincolo sui permessi che fa impazzire tutti: con
+                 <code>StrictModes=yes</code> (il default), sshd rifiuta file o directory di
+                 autenticazione scrivibili da altri utenti. Non è un bug: chi può modificare
+                 <code>authorized_keys</code> può entrare come te. <code>700</code> su
+                 <code>.ssh</code> e <code>600</code> sul file sono valori raccomandati e semplici;
+                 il requisito vero è proprietà corretta e nessuna scrittura altrui.</p>
                  <p>E per sapere cosa sshd sta <em>davvero</em> applicando, non si legge
                  <code>sshd_config</code>: si esegue <code>sshd -T</code>, che stampa la
                  configurazione effettiva con i valori di default già risolti. È la stessa
@@ -104,10 +105,11 @@ export default {
                  <p>On key authentication: the idea that unlocks everything is that <strong>the
                  private key never leaves your computer</strong>. On the server you put only the
                  public one, in <code>~/.ssh/authorized_keys</code>. Hence the permission rule that
-                 drives everyone mad: sshd <strong>refuses</strong> to use that file if the home or
-                 <code>.ssh</code> are group- or world-writable. Not a bug, a defence: if another
-                 user can write your <code>authorized_keys</code>, they can log in as you. You need
-                 <code>700</code> on <code>.ssh</code> and <code>600</code> on the file.</p>
+                 drives everyone mad: with <code>StrictModes=yes</code> (the default), sshd rejects
+                 authentication files or directories writable by other users. Not a bug: anyone
+                 who can modify <code>authorized_keys</code> can log in as you. <code>700</code> on
+                 <code>.ssh</code> and <code>600</code> on the file are simple recommended values;
+                 the real requirement is correct ownership and no write access for others.</p>
                  <p>And to know what sshd is <em>really</em> applying, you do not read
                  <code>sshd_config</code>: you run <code>sshd -T</code>, which prints the effective
                  configuration with defaults already resolved. Same difference as between reading a
@@ -174,10 +176,10 @@ export default {
             },
             checks: [
                 { id: "password-chiusa",
-                  why: { it: "Le password su ssh esposto a internet si rompono a forza bruta, prima o poi. Le chiavi no. È la singola modifica che riduce di più la superficie d'attacco di un server.",
-                         en: "Passwords on internet-facing ssh get brute-forced sooner or later. Keys do not. It is the single change that most reduces a server's attack surface." },
-                  nudge: { it: "<code>sshd -T | grep -i passwordauth</code> ti dice cosa sshd applica davvero, non cosa hai scritto. Se non cambia, forse c'è una seconda direttiva più in basso, o un file in <code>sshd_config.d/</code>.",
-                           en: "<code>sshd -T | grep -i passwordauth</code> tells you what sshd really applies, not what you wrote. If it does not change, there may be a second directive further down, or a file in <code>sshd_config.d/</code>." } },
+                  why: { it: "Disabilitare le password elimina il vettore della forza bruta sulle password. Le chiavi restano credenziali da proteggere, ma non sono indovinabili provando password comuni contro il server.",
+                         en: "Disabling passwords removes online password brute force as an attack path. Keys are still credentials that must be protected, but they cannot be guessed by trying common passwords against the server." },
+                  nudge: { it: "<code>sshd -T | grep -i passwordauth</code> ti dice cosa sshd applica davvero. Se non cambia, controlla dove cade l'<code>Include</code> e se un valore è già stato letto prima.",
+                           en: "<code>sshd -T | grep -i passwordauth</code> tells you what sshd really applies. If it does not change, check where <code>Include</code> occurs and whether a value was already read earlier." } },
                 { id: "sshd-attivo",
                   why: { it: "Una configurazione perfetta su un servizio spento non protegge niente e non serve nessuno. Vale sempre la pena verificare che sia ancora vivo dopo la modifica.",
                          en: "A perfect configuration on a stopped service protects nothing and serves nobody. Always worth checking it is still alive after the change." },
@@ -186,7 +188,7 @@ export default {
             ],
             hints: [
                 { it: "La direttiva è <code>PasswordAuthentication</code>, in <code>/etc/ssh/sshd_config</code>.", en: "The directive is <code>PasswordAuthentication</code>, in <code>/etc/ssh/sshd_config</code>." },
-                { it: "Attenzione ai file in <code>/etc/ssh/sshd_config.d/</code>: vengono inclusi e possono vincere sul file principale.", en: "Watch out for files in <code>/etc/ssh/sshd_config.d/</code>: they are included and can override the main file." },
+                { it: "Attenzione all'ordine: per molte direttive sshd conserva il primo valore ottenuto. I file in <code>sshd_config.d/</code> possono quindi vincere solo se l'<code>Include</code> viene letto prima di un valore già impostato. Conferma sempre con <code>sshd -T</code>.", en: "Order matters: for many directives sshd keeps the first obtained value. Files in <code>sshd_config.d/</code> can therefore win only when the <code>Include</code> is read before an already-set value. Always confirm with <code>sshd -T</code>." },
                 { it: "<code>printf 'PasswordAuthentication no\\n' &gt; /etc/ssh/sshd_config.d/99-lab.conf &amp;&amp; sshd -t &amp;&amp; systemctl restart ssh</code>", en: "<code>printf 'PasswordAuthentication no\\n' &gt; /etc/ssh/sshd_config.d/99-lab.conf &amp;&amp; sshd -t &amp;&amp; systemctl restart ssh</code>" },
             ],
         },

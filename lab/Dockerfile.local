@@ -36,7 +36,9 @@ RUN mkdir -p /etc/lvm && printf '%s\n' \
     > /etc/lvm/lvmlocal.conf
 
 COPY overlay/ /
-RUN chmod +x /opt/lab/bin/* /opt/lab/lib/labcheck.sh 2>/dev/null || true
+RUN chmod +x /opt/lab/bin/* /opt/lab/lib/labcheck.sh 2>/dev/null || true && \
+    ln -sf /opt/lab/bin/lab /usr/local/bin/lab && \
+    ln -sf /opt/lab/bin/lab-loop /usr/local/bin/lab-loop
 
 # L'agente seriale serve solo nel browser: qui l'utente digita `lab check` a mano.
 RUN rm -f /opt/lab/bin/labagentd

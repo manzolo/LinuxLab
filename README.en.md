@@ -48,7 +48,9 @@ chapter where you will really study it, which is there to say *"you did not miss
 
 This is not a good intention, it is a test: `npm test` builds the course's cumulative
 vocabulary — what the chapters up to that point declare, show and recap — and compares it with
-the commands appearing in the tasks and hints. It does the same for **skills** that are not a
+the commands and shell grammar appearing in the tasks and hints: redirections, `&&`, `||`, `;`,
+assignments and expansions, command substitution, background jobs, `$!`, `$?`, and `wait`. It
+does the same for **skills** that are not a
 command: from files and tasks it infers, for example, who requires multi-line writing, and only
 accepts the skill if a lesson already encountered has actually shown a heredoc, `vi`, and the
 exit route. If it finds a gap, the build fails and names it. On its first run the vocabulary
@@ -115,18 +117,29 @@ the same `lab check` command. Only the executor changes. And explaining *why* th
 work is itself chapter material: the reader learns what systemd actually needs in order to
 exist.
 
+There is one declared external prerequisite here, not hidden knowledge: Git and a running
+Docker installation capable of Linux containers. The lab does not teach Docker installation
+because that step differs across Linux, macOS, and Windows; before starting, it checks the
+actual capabilities of the environment and reports what is missing:
+
 ```bash
 git clone https://github.com/manzolo/LinuxLab && cd LinuxLab
+./lab/local/run.sh check         # Docker, cgroup v2, and kernel modules
 ./lab/local/run.sh 17 1          # prepare the lab and the exercise
 docker exec -it linuxlab bash    # get in
 lab check 17 1                   # check
 ./lab/local/run.sh cleanup       # when you are done
 ```
 
-> ⚠️ Chapter 21 uses a `--privileged` container, and the loop devices, LVM volumes and RAID
-> arrays it creates **are global to your computer**: an `lsblk` on the host will show them. That is why
-> everything the lab creates is named `lab-*`, and `cleanup` unmounts and detaches all of it.
-> It is written in the chapter too, because it is something to know rather than hide.
+> ⚠️ Local chapters use a `--privileged` container: in this Docker runtime systemd needs it to
+> create unit cgroups. This gives container root broad access to the host kernel: only run the
+> lab's commands, on a machine or VM you trust. It is not equivalent to the browser sandbox.
+>
+> Chapter 21 additionally creates loop devices, LVM volumes, and RAID arrays that are global
+> to the Linux kernel running Docker. On native Linux, host
+> `lsblk` will show them; with Docker Desktop the kernel belongs to its internal VM and chapter
+> 21 may not be supported. This is why `run.sh check` comes first and everything the lab creates
+> is named `lab-*`; `cleanup` unmounts and detaches it all.
 
 ## What this lab does NOT cover
 

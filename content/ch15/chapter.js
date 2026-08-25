@@ -95,9 +95,11 @@ export default {
                  <strong>solo dalla macchina stessa</strong>; su <code>0.0.0.0:5432</code> è
                  raggiungibile da chiunque arrivi. «Da locale funziona ma da fuori no» è quasi
                  sempre questo, e non un firewall.</p>
-                 <p>Le porte sotto la 1024 sono <strong>privilegiate</strong>: solo root può
-                 mettersi in ascolto. È il motivo per cui un'applicazione gira sulla 8080 e c'è un
-                 reverse proxy sulla 80 — non è una moda, è un vincolo del kernel.</p>
+                 <p>Le porte sotto la 1024 sono dette <strong>privilegiate</strong>. Nella
+                 configurazione Linux tradizionale serve root, ma un processo non-root può
+                 ricevere la capability <code>CAP_NET_BIND_SERVICE</code>; inoltre il limite è
+                 configurabile per network namespace. Far girare l'app sulla 8080 dietro un
+                 reverse proxy sulla 80 resta una scelta comune, non l'unica possibile.</p>
                  <p>E l'ordine di risoluzione dei nomi non è «prima il DNS»: lo decide
                  <code>/etc/nsswitch.conf</code>, e in pratica è <code>/etc/hosts</code> prima,
                  DNS dopo. Per questo una riga dimenticata in <code>hosts</code> può far puntare
@@ -109,9 +111,11 @@ export default {
                  the machine itself</strong>; on <code>0.0.0.0:5432</code> it is reachable by
                  anyone who gets there. "It works locally but not from outside" is almost always
                  this, not a firewall.</p>
-                 <p>Ports below 1024 are <strong>privileged</strong>: only root may listen on them.
-                 That is why an application runs on 8080 with a reverse proxy on 80 — not a
-                 fashion, a kernel constraint.</p>
+                 <p>Ports below 1024 are called <strong>privileged</strong>. In the traditional
+                 Linux setup they require root, but a non-root process may receive the
+                 <code>CAP_NET_BIND_SERVICE</code> capability; the threshold is also configurable
+                 per network namespace. Running the application on 8080 behind a reverse proxy on
+                 80 remains common, but it is not the only possible design.</p>
                  <p>And name resolution order is not "DNS first": it is decided by
                  <code>/etc/nsswitch.conf</code>, and in practice it is <code>/etc/hosts</code>
                  first, DNS after. Which is why a forgotten line in <code>hosts</code> can point a

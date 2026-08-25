@@ -45,7 +45,10 @@ function avvia() {
     process.stdout.write("attendo systemd");
     for (let i = 0; i < 40; i++) {
         const r = dentro("systemctl is-system-running 2>/dev/null || true");
-        if (/running|degraded/.test(r.out)) { console.log(" ok"); return; }
+        if (/running|degraded/.test(r.out)) {
+            sh(`docker cp ${LIB} ${NOME}:/opt/lab/lib/proprieta.sh`);
+            console.log(" ok"); return;
+        }
         process.stdout.write("."); execSync("sleep 1");
     }
     console.log(" (avviato comunque)");
@@ -122,7 +125,9 @@ function pulisciTutto(silenzioso = false) {
         const r = sh(`docker exec ${NOME} sh -c '
             . /opt/lab/lib/proprieta.sh
             lab_disfa_vg lab-vg || exit 1
-            lab_disfa_md /dev/md/lab-raid || exit 1' 2>&1`);
+            lab_disfa_md /dev/md/lab-raid || exit 1
+            for l in $(lab_loop_nostri); do losetup -d "$l" || exit 1; done
+            test -z "$(lab_loop_nostri)" || exit 1' 2>&1`);
         if (r.trim()) console.log("  " + r.trim().replace(/\n/g, "\n  "));
         disfatto = true;
     } catch { /* il container puo' non esserci: lo diciamo sotto */ }

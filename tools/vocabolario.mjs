@@ -22,15 +22,22 @@ const OPERATORI = [
     { tok: "2>", re: /2>/ },
     { tok: ">", re: /(^|[^0-9>&])>($|[^>])/ },
     { tok: "<", re: /(^|[^<])<($|[^<])/ },
+    { tok: "&&", re: /&&/ },
+    { tok: "||", re: /\|\|/ },
+    { tok: ";", re: /;/ },
     { tok: "|", re: /(^|[^|])\|($|[^|])/ },
     { tok: "$(", re: /\$\(/ },
+    { tok: "$!", re: /\$!/ },
+    { tok: "$?", re: /\$\?/ },
+    { tok: "VAR=", re: /(^|(?:&&|\|\||[;&\n])\s*)(?:export\s+)?[A-Za-z_][A-Za-z0-9_]*=[^\s;]+/ },
+    { tok: "$VAR", re: /\$(?:\{)?[A-Za-z_][A-Za-z0-9_]*/ },
     { tok: "&", re: /(^|\s)&(\s|$)/ },
 ];
 
 // Comandi che compaiono nei testi ma che nessun capitolo mette nel proprio
 // vocabolario: senza questo elenco passerebbero inosservati.
-const EXTRA = ["touch", "sleep", "tar", "dd", "truncate", "modprobe", "addgroup",
-               "seq", "basename", "dirname", "xargs", "tee", "nohup", "setsid"];
+const EXTRA = ["touch", "sleep", "sync", "tar", "dd", "truncate", "modprobe", "addgroup",
+               "seq", "basename", "dirname", "xargs", "tee", "wait", "nohup", "setsid"];
 
 // Sintassi della shell e comandi del lab: disponibili da sempre, non si "insegnano".
 //
@@ -69,7 +76,7 @@ export function tokenDi(riga) {
     if (OPERATORI.some(o => o.tok === s)) fuori.add(s);
     // Oltre ai separatori veri della shell si spezza anche su " / ", che nei
     // riepiloghi e negli attrezzi vuol dire "questo oppure quello".
-    for (const seg of s.split(/\|\||&&|\||;|\$\(|\s\/\s/)) {
+    for (const seg of s.split(/\|\||&&|\||;|\$\(|(?:^|\s)&(?:\s|$)|\s\/\s/)) {
         let w = seg.trim().split(/\s+/)[0] || "";
         w = w.replace(/^\.\//, "").replace(/^['"]/, "");
         if (/^[a-z][a-z0-9._-]*$/i.test(w) && !SEGNAPOSTO.has(w.toLowerCase())) fuori.add(w);

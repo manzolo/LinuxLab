@@ -18,13 +18,13 @@ export default {
                  — and it is also everything you need.` } },
 
         { kind: "lead", html: {
-            it: `In questo capitolo scopri che il terminale non è una cosa da iniziati: è un
-                 programma banale che fa una cosa sola. Legge una riga, la spezza in pezzi,
-                 esegue il primo pezzo passandogli gli altri. Alla fine saprai chi sei, su che
+            it: `In questo capitolo separi due cose che si confondono spesso: il
+                 <strong>terminale</strong> è la finestra che mostra testo e tasti; la
+                 <strong>shell</strong> interpreta i comandi. Alla fine saprai chi sei, su che
                  macchina sei, e soprattutto <strong>come scoprire da solo quello che non sai</strong>.`,
-            en: `In this chapter you find out that the terminal is not a thing for the initiated:
-                 it is a plain program that does one thing. It reads a line, splits it into pieces,
-                 runs the first piece passing it the others. By the end you will know who you are,
+            en: `In this chapter you separate two things that are often confused: the
+                 <strong>terminal</strong> is the window handling text and keystrokes; the
+                 <strong>shell</strong> interprets commands. By the end you will know who you are,
                  what machine you are on, and above all <strong>how to find out what you don't
                  know</strong>.` } },
 
@@ -70,24 +70,28 @@ export default {
         { kind: "lab" },
 
         { kind: "pro", html: {
-            it: `<p>Quando scrivi <code>echo ciao</code> la shell fa più cose di quante sembri.
-                 Spezza la riga sugli spazi (<em>word splitting</em>), espande le eventuali
-                 wildcard e variabili, cerca <code>echo</code> nelle cartelle elencate in
-                 <code>$PATH</code>, poi chiama <code>fork()</code> per duplicarsi ed
-                 <code>execve()</code> nel figlio per sostituirlo con il programma. Il padre
-                 aspetta con <code>wait()</code>. Ecco perché ogni comando è un processo nuovo,
-                 e perché un comando non può cambiare la directory della shell che lo ha lanciato
+            it: `<p>Quando scrivi una riga, la shell prima riconosce parole e operatori rispettando
+                 le virgolette; poi esegue le espansioni (variabili, sostituzioni, wildcard), le
+                 redirezioni e infine il comando. Il <em>word splitting</em> non è «tagliare tutta
+                 la riga sugli spazi»: si applica ai risultati di alcune espansioni non quotate.</p>
+                 <p>Se il comando è esterno, la shell lo cerca in <code>$PATH</code> e lo esegue in
+                 un processo separato; se è un builtin come <code>echo</code>, lo esegue
+                 direttamente. Per questo non è vero che ogni comando crea un processo nuovo, ed
+                 è anche il motivo per cui un programma esterno non può cambiare la directory
+                 della shell che lo ha lanciato
                  — se <code>cd</code> fosse un programma esterno, cambierebbe la propria
                  directory e poi morirebbe. Per questo <code>cd</code> è integrato nella shell.</p>
                  <p>Lo verifichi con <code>type</code>: <code>type echo</code> dice
                  <em>builtin</em>, <code>type ls</code> ti dà un percorso su disco.</p>`,
-            en: `<p>When you type <code>echo ciao</code> the shell does more than it looks. It
-                 splits the line on spaces (<em>word splitting</em>), expands wildcards and
-                 variables, looks for <code>echo</code> in the directories listed in
-                 <code>$PATH</code>, then calls <code>fork()</code> to duplicate itself and
-                 <code>execve()</code> in the child to replace it with the program. The parent
-                 waits with <code>wait()</code>. That is why every command is a new process, and
-                 why a command cannot change the directory of the shell that launched it — if
+            en: `<p>When you type a line, the shell first recognises words and operators while
+                 honouring quotes; it then performs expansions (variables, substitutions,
+                 wildcards), redirections, and finally the command. <em>Word splitting</em> does
+                 not mean “split the whole line on spaces”: it applies to the results of certain
+                 unquoted expansions.</p>
+                 <p>If the command is external, the shell finds it through <code>$PATH</code> and
+                 runs it in a separate process; if it is a builtin such as <code>echo</code>, it
+                 runs it directly. So not every command creates a new process, and this is also
+                 why an external program cannot change the directory of its calling shell — if
                  <code>cd</code> were an external program it would change its own directory and
                  then die. That is why <code>cd</code> is built into the shell.</p>
                  <p>You can check with <code>type</code>: <code>type echo</code> says

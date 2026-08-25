@@ -100,7 +100,7 @@ export default {
         ] },
 
         { kind: "recap", table: [
-            { cmd: "/etc", what: { it: "configurazione del sistema", en: "system configuration" }, flag: { it: "testo, sempre. Si legge e si versiona", en: "text, always. Readable and versionable" } },
+            { cmd: "/etc", what: { it: "configurazione del sistema", en: "system configuration" }, flag: { it: "in gran parte testo; esistono eccezioni", en: "mostly text; exceptions exist" } },
             { cmd: "/var", what: { it: "roba che cresce: log, code, cache", en: "things that grow: logs, queues, caches" }, flag: { it: "<code>/var/log</code> è il primo posto dove guardare", en: "<code>/var/log</code> is the first place to look" } },
             { cmd: "/usr", what: { it: "programmi e librerie", en: "programs and libraries" }, flag: { it: "<code>/usr/bin</code> quasi tutti i comandi", en: "<code>/usr/bin</code> almost every command" } },
             { cmd: "/home", what: { it: "le cartelle degli utenti", en: "user directories" }, flag: { it: "la tua è <code>~</code>", en: "yours is <code>~</code>" } },
@@ -129,7 +129,7 @@ export default {
             hints: [
                 { it: "Il file che descrive la distribuzione sta in <code>/etc</code> e si chiama <code>os-release</code>.", en: "The file describing the distribution is in <code>/etc</code> and is called <code>os-release</code>." },
                 { it: "Ti servono i valori di <code>ID</code> e <code>VERSION_ID</code>, uniti da un trattino.", en: "You need the values of <code>ID</code> and <code>VERSION_ID</code>, joined by a dash." },
-                { it: "<code>. /etc/os-release &amp;&amp; lab answer \"$ID-$VERSION_ID\"</code>", en: "<code>. /etc/os-release &amp;&amp; lab answer \"$ID-$VERSION_ID\"</code>" },
+                { it: "Leggi i due valori con <code>cat /etc/os-release</code>, uniscili tu con un trattino e consegnali con <code>lab answer valore-valore</code>.", en: "Read both values with <code>cat /etc/os-release</code>, join them yourself with a dash, and submit with <code>lab answer value-value</code>." },
             ],
         },
         {
@@ -144,12 +144,12 @@ export default {
                 { id: "core",
                   why: { it: "È il primo file di <code>/proc</code> che leggerai, e serve a capire il concetto: quel file non è memorizzato, è <em>generato</em> mentre lo leggi.",
                          en: "It is the first <code>/proc</code> file you will read, and it exists to make the point: that file is not stored, it is <em>generated</em> as you read it." },
-                  nudge: { it: "In <code>/proc/cpuinfo</code> c'è una riga <code>processor</code> per ogni core. <code>grep -c</code> conta le righe che corrispondono.",
-                           en: "In <code>/proc/cpuinfo</code> there is one <code>processor</code> line per core. <code>grep -c</code> counts matching lines." } },
+                  nudge: { it: "In <code>/proc/cpuinfo</code> c'è una riga <code>processor</code> per ogni CPU logica visibile (i thread hardware contano separatamente). <code>grep -c</code> conta le righe che corrispondono.",
+                           en: "In <code>/proc/cpuinfo</code> there is one <code>processor</code> line per visible logical CPU (hardware threads count separately). <code>grep -c</code> counts matching lines." } },
             ],
             hints: [
                 { it: "Guarda dentro <code>/proc/cpuinfo</code>.", en: "Look inside <code>/proc/cpuinfo</code>." },
-                { it: "Ogni core ha la sua riga che comincia con <code>processor</code>.", en: "Each core has its own line starting with <code>processor</code>." },
+                { it: "Ogni CPU logica ha la sua riga che comincia con <code>processor</code>.", en: "Each logical CPU has its own line starting with <code>processor</code>." },
                 { it: "<code>grep -c ^processor /proc/cpuinfo | lab answer</code>", en: "<code>grep -c ^processor /proc/cpuinfo | lab answer</code>" },
             ],
         },

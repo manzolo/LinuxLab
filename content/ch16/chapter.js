@@ -5,7 +5,7 @@ export default {
         it: "Automatizzare quello che hai già fatto a mano quindici volte.",
         en: "Automating what you have already done by hand fifteen times.",
     },
-    commands: ["#!/bin/bash", "$1", "if", "test", "for", "while read", "exit", "set -euo pipefail", "$(...)"],
+    commands: ["#!/bin/bash", "$1", "if", "test", "for", "while read", "exit", "||", "set -euo pipefail", "$(...)"],
     glossary: ["shebang", "exit code", "parametro", "quoting"],
 
     blocks: [
@@ -19,12 +19,12 @@ export default {
                  it.</strong>` } },
 
         { kind: "lead", html: {
-            it: `Uno script non è programmazione: è <strong>la stessa shell</strong>, con i comandi
-                 scritti in un file invece che a mano. Quello che aggiungi sono tre cose: gli
-                 argomenti, le decisioni, e i cicli.`,
-            en: `A script is not programming: it is <strong>the same shell</strong>, with the
-                 commands in a file instead of typed. What you add is three things: arguments,
-                 decisions, and loops.` } },
+            it: `Uno script non introduce un nuovo linguaggio: è <strong>programmazione con la
+                 stessa shell</strong>, scritta in un file invece che digitata. Qui aggiungi tre
+                 mattoni a quelli già usati: argomenti, decisioni e cicli.`,
+            en: `A script does not introduce a new language: it is <strong>programming with the
+                 same shell</strong>, written in a file instead of typed. Here you add three
+                 building blocks to those you already used: arguments, decisions, and loops.` } },
 
         { kind: "analogy", html: {
             it: `La ricetta scritta su un foglio. Gli <strong>ingredienti variabili</strong> sono
@@ -41,6 +41,9 @@ export default {
                  without it no other program can trust yours.` } },
 
         { kind: "shown", lines: [
+            { cmd: "false || echo \"fallito come previsto\"", out: "fallito come previsto",
+              note: { it: "Hai già visto <code>&amp;&amp;</code>: esegue la parte destra solo dopo un successo. <code>||</code> la esegue solo dopo un fallimento. Sono controlli di flusso compatti, non separatori decorativi.",
+                      en: "You have already seen <code>&amp;&amp;</code>: it runs the right side only after success. <code>||</code> runs it only after failure. They are compact flow control, not decorative separators." } },
             { cmd: "cat conta.sh", out: '#!/bin/bash\nset -euo pipefail\n\nif [ $# -lt 1 ]; then\n  echo "uso: $0 CARTELLA" >&2\n  exit 2\nfi\n\nif [ ! -d "$1" ]; then\n  echo "non è una cartella: $1" >&2\n  exit 1\nfi\n\nfind "$1" -type f | wc -l',
               note: { it: "Cinque righe di impalcatura e una di lavoro. L'impalcatura è quello che distingue uno script usabile da un appunto: dice cosa serve, controlla, e <strong>esce con un codice diverso per ogni tipo di problema</strong>.",
                       en: "Five lines of scaffolding and one of work. The scaffolding is what separates a usable script from a note: it says what it needs, checks, and <strong>exits with a different code for each kind of problem</strong>." } },
@@ -61,12 +64,14 @@ export default {
         { kind: "lab" },
 
         { kind: "pro", html: {
-            it: `<p><code>set -euo pipefail</code> è la riga che trasforma uno script fragile in uno
-                 script onesto, e vale la pena sapere cosa fa ciascun pezzo:
-                 <code>-e</code> ferma tutto al primo comando che fallisce (invece di proseguire
-                 allegramente sui cocci); <code>-u</code> considera un errore usare una variabile
-                 mai assegnata (senza, <code>rm -rf "$DIR/"</code> con <code>DIR</code> vuoto
-                 diventa <code>rm -rf /</code>); <code>pipefail</code> fa fallire una pipe se
+            it: `<p><code>set -euo pipefail</code> è una buona cintura di sicurezza, non una prova
+                 che lo script sia corretto. <code>-e</code> esce su molti fallimenti, ma ha
+                 eccezioni intenzionali nei test di <code>if</code>, nei cicli, nelle liste
+                 <code>&amp;&amp;</code>/<code>||</code> e in parti delle pipeline; i fallimenti critici
+                 vanno comunque gestiti esplicitamente. <code>-u</code> rende errore una variabile
+                 <em>non assegnata</em>, ma non una variabile assegnata alla stringa vuota: per un
+                 percorso pericoloso serve una guardia come <code>\${DIR:?DIR vuota}</code>.
+                 <code>pipefail</code> fa fallire una pipe se
                  <em>qualsiasi</em> comando dentro fallisce, non solo l'ultimo — senza,
                  <code>comando-che-esplode | tee log</code> risulta riuscito.</p>
                  <p>La differenza fra <code>sh</code> e <code>bash</code> non è accademica: su
@@ -79,12 +84,13 @@ export default {
                  <code>"$*"</code> li appiccica in una stringa sola, <code>$@</code> senza
                  virgolette li spezza sugli spazi. Sono tre cose diverse che sembrano uguali, e la
                  forma giusta nel 95% dei casi è <code>"$@"</code>, con le virgolette.</p>`,
-            en: `<p><code>set -euo pipefail</code> is the line that turns a fragile script into an
-                 honest one, and it is worth knowing what each piece does: <code>-e</code> stops
-                 at the first failing command (instead of cheerfully carrying on over the
-                 wreckage); <code>-u</code> makes using an unset variable an error (without it,
-                 <code>rm -rf "$DIR/"</code> with an empty <code>DIR</code> becomes
-                 <code>rm -rf /</code>); <code>pipefail</code> makes a pipeline fail if
+            en: `<p><code>set -euo pipefail</code> is a useful safety belt, not proof that a script
+                 is correct. <code>-e</code> exits on many failures, but intentionally has
+                 exceptions in <code>if</code> tests, loops, <code>&amp;&amp;</code>/<code>||</code> lists,
+                 and parts of pipelines; critical failures still need explicit handling.
+                 <code>-u</code> makes an <em>unset</em> variable an error, but not a variable set to
+                 the empty string: a dangerous path needs a guard such as
+                 <code>\${DIR:?DIR is empty}</code>. <code>pipefail</code> makes a pipeline fail if
                  <em>any</em> command inside fails, not just the last — without it,
                  <code>exploding-command | tee log</code> counts as a success.</p>
                  <p>The difference between <code>sh</code> and <code>bash</code> is not academic:
@@ -101,18 +107,19 @@ export default {
         { kind: "pitfalls", items: [
             { it: "<strong>Uno script senza il permesso <code>x</code> non parte</strong>, e il messaggio (<em>Permission denied</em>) sembra dire un'altra cosa. È il capitolo 6 che ritorna: <code>chmod 755</code>.",
               en: "<strong>A script without the <code>x</code> permission will not run</strong>, and the message (<em>Permission denied</em>) seems to say something else. Chapter 6 returning: <code>chmod 755</code>." },
-            { it: "<strong>Le variabili vanno sempre fra virgolette.</strong> <code>rm $FILE</code> con uno spazio nel nome cancella due cose diverse. <code>rm \"$FILE\"</code> no.",
-              en: "<strong>Always quote your variables.</strong> <code>rm $FILE</code> with a space in the name deletes two different things. <code>rm \"$FILE\"</code> does not." },
+            { it: "<strong>Quota le espansioni usate come argomenti, salvo quando vuoi deliberatamente splitting o globbing.</strong> <code>rm $FILE</code> con uno spazio nel nome diventa più argomenti; <code>rm \"$FILE\"</code> resta un solo nome. Assegnazioni, aritmetica e alcuni costrutti hanno regole diverse.",
+              en: "<strong>Quote expansions used as arguments unless you deliberately want splitting or globbing.</strong> <code>rm $FILE</code> with a space in the name becomes multiple arguments; <code>rm \"$FILE\"</code> stays one name. Assignments, arithmetic, and some constructs have different rules." },
             { it: "<strong>Uscire sempre con 0 rende il tuo script inutilizzabile dagli altri.</strong> Cron, un altro script o una pipeline si fidano del codice di uscita: se dici sempre «tutto bene», nessuno saprà mai che è andata male.",
               en: "<strong>Always exiting 0 makes your script unusable by others.</strong> Cron, another script or a pipeline trust the exit code: if you always say \"fine\", nobody will ever know it went wrong." },
         ] },
 
         { kind: "recap", table: [
             { cmd: "#!/bin/bash", what: { it: "chi deve eseguire questo file", en: "who must run this file" }, flag: { it: "prima riga, e serve <code>chmod +x</code>", en: "first line, and you need <code>chmod +x</code>" } },
-            { cmd: '"$1" "$@"', what: { it: "gli argomenti", en: "the arguments" }, flag: { it: "sempre fra virgolette. Sempre.", en: "always quoted. Always." } },
+            { cmd: '"$1" "$@"', what: { it: "gli argomenti", en: "the arguments" }, flag: { it: "quotali quando li passi come argomenti", en: "quote them when passing them as arguments" } },
             { cmd: "if [ … ]; then", what: { it: "decidi", en: "decide" }, flag: { it: "<code>-f</code> file, <code>-d</code> cartella, <code>-z</code> stringa vuota", en: "<code>-f</code> file, <code>-d</code> directory, <code>-z</code> empty string" } },
             { cmd: "exit N", what: { it: "dì com'è andata", en: "say how it went" }, flag: { it: "<code>0</code> bene, qualunque altro numero male", en: "<code>0</code> good, any other number bad" } },
-            { cmd: "set -euo pipefail", what: { it: "fermati al primo guaio", en: "stop at the first problem" }, flag: { it: "la riga che rende uno script affidabile", en: "the line that makes a script trustworthy" } },
+            { cmd: "&& / ||", what: { it: "continua dopo successo / fallimento", en: "continue after success / failure" }, flag: { it: "il comando a destra può non essere eseguito", en: "the right-hand command may not run" } },
+            { cmd: "set -euo pipefail", what: { it: "rende visibili molti guai", en: "makes many failures visible" }, flag: { it: "cintura di sicurezza, non prova di correttezza", en: "a safety belt, not proof of correctness" } },
         ] },
     ],
 

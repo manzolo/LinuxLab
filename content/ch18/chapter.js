@@ -65,18 +65,20 @@ export default {
               { testo: { it: "Nel firewall, che blocca il traffico in uscita.", en: "In the firewall, blocking outbound traffic." }, giusta: false },
           ],
           spiegazione: {
-              it: `Se il ping <em>numerico</em> arriva a destinazione, allora interfaccia, indirizzo,
-                   rotta e gateway funzionano tutti: il pacchetto è uscito ed è tornato. L'unica
-                   cosa rimasta è tradurre il nome in numero, e quella è la riga
-                   <code>nameserver</code> in <code>/etc/resolv.conf</code>.
-                   <strong>Questa è la scaletta:</strong> ogni prova che riesce esclude tutti i
-                   livelli sotto di sé.`,
-              en: `If the <em>numeric</em> ping reaches its destination, then interface, address,
-                   route and gateway all work: the packet went out and came back. The only thing
-                   left is turning a name into a number, and that is the <code>nameserver</code>
-                   line in <code>/etc/resolv.conf</code>.
-                   <strong>That is the checklist:</strong> every test that succeeds rules out every
-                   layer below it.` } },
+              it: `Se il ping <em>numerico</em> arriva a destinazione, la connettività IP verso
+                   quell'indirizzo funziona: interfaccia e una rotta utilizzabile ci sono. Il
+                   guasto è nel percorso di risoluzione dei nomi, ma non per forza in una sola
+                   riga: controlla <code>/etc/nsswitch.conf</code>, <code>/etc/hosts</code>, come
+                   viene gestito <code>/etc/resolv.conf</code>, il server DNS e l'eventuale filtro
+                   sulle query. <code>dig</code> interroga il DNS direttamente e aiuta a separare
+                   questi casi.`,
+              en: `If the <em>numeric</em> ping reaches its destination, IP connectivity to that
+                   address works: the interface and a usable route exist. The fault is in the name
+                   resolution path, but not necessarily in one line: check
+                   <code>/etc/nsswitch.conf</code>, <code>/etc/hosts</code>, how
+                   <code>/etc/resolv.conf</code> is managed, the DNS server, and any filtering of
+                   DNS queries. <code>dig</code> queries DNS directly and helps separate those
+                   cases.` } },
 
         { kind: "pro", html: {
             it: `<p><code>ip route get 8.8.8.8</code> è il comando più sottovalutato della rete

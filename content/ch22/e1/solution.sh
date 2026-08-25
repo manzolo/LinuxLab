@@ -4,11 +4,12 @@ set -euo pipefail
 
 # 1 — utente di servizio (idempotente: non fallisce se esiste gia')
 id appsrv >/dev/null 2>&1 || useradd --system --shell /usr/sbin/nologin appsrv
+usermod --shell /usr/sbin/nologin appsrv
 
 # 2 — contenuti e permessi
 mkdir -p /srv/sito
 [ -f /srv/sito/index.html ] || echo '<h1>sito in piedi</h1>' > /srv/sito/index.html
-chown -R appsrv:appsrv /srv/sito
+chown -R root:www-data /srv/sito
 find /srv/sito -type f -exec chmod 644 {} +
 find /srv/sito -type d -exec chmod 755 {} +
 
@@ -23,6 +24,7 @@ cat > /etc/systemd/system/guardiano.service <<'EOF'
 [Unit]
 Description=Guardiano del sito
 [Service]
+User=appsrv
 ExecStart=/bin/sh -c 'while :; do sleep 60; done'
 Restart=always
 [Install]
@@ -41,13 +43,22 @@ chmod 755 /usr/local/bin/backup.sh
 ( crontab -l 2>/dev/null | grep -v backup.sh || true; \
   echo '30 3 * * * /usr/local/bin/backup.sh' ) | crontab -
 
-# 6 — firewall
-nft delete table inet lab 2>/dev/null || true
-nft add table inet lab
-nft add chain inet lab input '{ type filter hook input priority 0; policy drop; }'
-nft add rule inet lab input ct state established,related accept
-nft add rule inet lab input iif lo accept
-nft add rule inet lab input tcp dport '{ 22, 80 }' accept
+# 6 — firewall: il file e il servizio lo rendono persistente al riavvio
+cat > /etc/nftables.conf <<'EOF'
+#!/usr/sbin/nft -f
+flush ruleset
+
+table inet lab {
+    chain input {
+        type filter hook input priority 0; policy drop;
+        ct state established,related accept
+        iif lo accept
+        tcp dport { 22, 80 } accept
+    }
+}
+EOF
+nft -f /etc/nftables.conf
+systemctl enable nftables >/dev/null 2>&1
 
 echo "provisioning completato"
 PROV

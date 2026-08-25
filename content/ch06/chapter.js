@@ -75,12 +75,14 @@ export default {
                  <p>E i permessi che vedi su un file nuovo non li hai scelti tu: li ha decisi la
                  <strong>umask</strong>, che <em>toglie</em> bit dal massimo consentito (666 per i
                  file, 777 per le cartelle — l'eseguibilità non si regala mai). Con
-                 <code>umask 022</code> un file nasce 644 e una cartella 755. Non è una
-                 coincidenza: è la sottrazione.</p>
+                 <code>umask 022</code> un file nasce 644 e una cartella 755. La regola esatta è
+                 una maschera sui bit (<code>modo &amp; ~umask</code>), non una normale sottrazione:
+                 con valori diversi, sottrarre dà risultati sbagliati.</p>
                  <p>Ci sono poi tre bit oltre i nove: <em>setuid</em>, <em>setgid</em> e lo
                  <em>sticky bit</em>. Quest'ultimo è il motivo per cui in <code>/tmp</code>
-                 (permessi <code>1777</code>) chiunque può scrivere ma nessuno può cancellare i
-                 file altrui.</p>`,
+                 (permessi <code>1777</code>) chiunque può scrivere, ma solo il proprietario del
+                 file, il proprietario della directory o root può rimuovere o rinominare una
+                 voce.</p>`,
             en: `<p><code>r</code> on a directory and <code>x</code> on a directory do two
                  different things, and confusing them explains half the broken permissions in the
                  world: <code>r</code> lets you <em>list the names</em>, <code>x</code> lets you
@@ -92,12 +94,13 @@ export default {
                  <p>And the permissions on a new file were not chosen by you: they were decided by
                  the <strong>umask</strong>, which <em>removes</em> bits from the allowed maximum
                  (666 for files, 777 for directories — executability is never given away). With
-                 <code>umask 022</code> a file is born 644 and a directory 755. Not a coincidence:
-                 it is the subtraction.</p>
+                 <code>umask 022</code> a file is born 644 and a directory 755. The exact rule is
+                 a bit mask (<code>mode &amp; ~umask</code>), not ordinary subtraction: with other
+                 values, subtracting gives the wrong answer.</p>
                  <p>There are also three bits beyond the nine: <em>setuid</em>, <em>setgid</em>
                  and the <em>sticky bit</em>. The last is why in <code>/tmp</code> (mode
-                 <code>1777</code>) anyone can write but nobody can delete other people's
-                 files.</p>` } },
+                 <code>1777</code>) anyone can write, but only the file owner, the directory owner,
+                 or root may remove or rename an entry.</p>` } },
 
         { kind: "pitfalls", items: [
             { it: "<strong><code>chmod 777</code> non è «risolvere», è «arrendersi».</strong> Funziona sempre, e apre la porta a chiunque. Se ti viene la tentazione, il problema quasi sempre è il <em>proprietario</em>, non i permessi.",
@@ -147,11 +150,13 @@ export default {
                 it: `Il sito in <code>~/lab/srv/sito</code> è stato copiato da un backup ed è tutto
                      <code>777</code>, di proprietà di <code>root</code>. Rimettilo a posto:
                      <strong>file 644</strong>, <strong>cartelle 755</strong>, tutto di proprietà
-                     di <code>web:web</code>.`,
+                     di <code>root:web</code>. Il processo web deve poter leggere, non riscrivere
+                     i contenuti che serve.`,
                 en: `The site in <code>~/lab/srv/sito</code> came from a backup and is all
                      <code>777</code>, owned by <code>root</code>. Fix it:
                      <strong>files 644</strong>, <strong>directories 755</strong>, everything owned
-                     by <code>web:web</code>.`,
+                     by <code>root:web</code>. The web process must be able to read, not rewrite,
+                     the content it serves.`,
             },
             attrezzi: [
                 { cmd: "find … -type f -exec … {} +", cap: 9, cosa: {
@@ -184,7 +189,7 @@ export default {
             hints: [
                 { it: "Servono due passaggi diversi: uno per i file, uno per le cartelle. Un <code>chmod -R</code> solo non può farli entrambi.", en: "You need two separate passes: one for files, one for directories. A single <code>chmod -R</code> cannot do both." },
                 { it: "<code>find … -type f</code> e <code>find … -type d</code> ti danno i due insiemi separati.", en: "<code>find … -type f</code> and <code>find … -type d</code> give you the two sets separately." },
-                { it: "<code>chown -R web:web ~/lab/srv/sito</code>, poi <code>find ~/lab/srv/sito -type f -exec chmod 644 {} +</code> e lo stesso con <code>-type d</code> e <code>755</code>.", en: "<code>chown -R web:web ~/lab/srv/sito</code>, then <code>find ~/lab/srv/sito -type f -exec chmod 644 {} +</code> and the same with <code>-type d</code> and <code>755</code>." },
+                { it: "<code>chown -R root:web ~/lab/srv/sito</code>, poi <code>find ~/lab/srv/sito -type f -exec chmod 644 {} +</code> e lo stesso con <code>-type d</code> e <code>755</code>.", en: "<code>chown -R root:web ~/lab/srv/sito</code>, then <code>find ~/lab/srv/sito -type f -exec chmod 644 {} +</code> and the same with <code>-type d</code> and <code>755</code>." },
             ],
         },
         {
@@ -204,8 +209,8 @@ export default {
                   nudge: { it: "<code>chmod u+x file</code> aggiunge il permesso al solo proprietario, senza toccare gli altri.",
                            en: "<code>chmod u+x file</code> adds the permission to the owner only, leaving the others alone." } },
                 { id: "non-per-gli-altri",
-                  why: { it: "<code>chmod +x</code> senza specificare a chi lo dà a tutti e tre i terzetti. Su uno script di deploy è una porta aperta.",
-                         en: "<code>chmod +x</code> without saying to whom gives it to all three triplets. On a deploy script that is an open door." },
+                  why: { it: "Con la classe omessa, <code>chmod +x</code> parte da <code>a</code> ma rispetta la <code>umask</code>: il risultato dipende dall'ambiente. <code>u+x</code> esprime invece esattamente l'intenzione.",
+                         en: "With the class omitted, <code>chmod +x</code> starts from <code>a</code> but honours the <code>umask</code>: the result depends on the environment. <code>u+x</code> states the intent exactly." },
                   nudge: { it: "<code>stat -c '%a' ~/lab/deploy.sh</code>: la cifra giusta finisce per 4 e 4. Cerchiamo <code>744</code>.",
                            en: "<code>stat -c '%a' ~/lab/deploy.sh</code>: the right number ends in 4 and 4. We want <code>744</code>." } },
             ],

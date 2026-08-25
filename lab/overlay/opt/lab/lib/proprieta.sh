@@ -130,13 +130,29 @@ lab_disfa_vg() {
 # si sia davvero fermato prima di dire di si'.
 lab_disfa_md() {
     [ -e "$1" ] || return 0
+    _reale=$(readlink -f "$1") || return 0
+    # Senza udev il nodo /dev/mdN può restare dopo lo stop. L'esistenza del file
+    # speciale non prova che nel kernel esista ancora un array: `mdadm --detail`
+    # sì. In quel caso non c'è più nulla da fermare.
+    ${LAB_SUDO:-} mdadm --detail "$_reale" >/dev/null 2>&1 || return 0
     if ! lab_md_nostro "$1"; then
         echo "ATTENZIONE: $1 non e' dimostrabilmente del laboratorio: non lo fermo." >&2
         return 1
     fi
-    _reale=$(readlink -f "$1")
+    # L'esercizio RAID monta l'array qui. Prima di smontare si confrontano i
+    # dispositivi reali: un mount estraneo sullo stesso percorso non va toccato.
+    if command -v findmnt >/dev/null 2>&1 \
+       && [ "$(${LAB_SUDO:-} findmnt -n -o TARGET --target /mnt/raid 2>/dev/null)" = /mnt/raid ]; then
+        _src=$(${LAB_SUDO:-} findmnt -n -o SOURCE --target /mnt/raid 2>/dev/null) || return 1
+        _src_reale=$(${LAB_SUDO:-} readlink -f "$_src" 2>/dev/null) || return 1
+        if [ "$_src_reale" != "$_reale" ]; then
+            echo "ATTENZIONE: /mnt/raid e' servito da $_src, non da $1: non lo smonto." >&2
+            return 1
+        fi
+        ${LAB_SUDO:-} umount /mnt/raid 2>/dev/null || return 1
+    fi
     ${LAB_SUDO:-} mdadm --stop "$_reale" >/dev/null 2>&1 || true
-    if [ -e "$_reale" ] || [ -e "$1" ]; then
+    if ${LAB_SUDO:-} mdadm --detail "$_reale" >/dev/null 2>&1; then
         echo "ATTENZIONE: $1 e' ancora attivo dopo mdadm --stop." >&2
         return 1
     fi

@@ -30,6 +30,10 @@ export default {
                  qui in avanti lavori su Debian con systemd, che è quello che troverai sui server.
                  <em>Non è un ripiego: è la differenza fra i due mondi, ed è materia di questo
                  capitolo.</em></p>
+                 <p>Nota di sicurezza: per dare a systemd un cgroup scrivibile, questo runtime
+                 Docker avvia il container con <code>--privileged</code>. Root nel container ha
+                 quindi accesso molto ampio al kernel host: esegui solo i comandi del lab e usa
+                 una macchina o VM di cui ti fidi. Non è la sandbox del browser.</p>
                  <p>Il laboratorio è un container Debian con systemd come PID 1. Copia il comando,
                  e in un minuto sei dentro.</p>`,
             en: `<p><strong>This chapter does not run in the browser, and there is a precise
@@ -42,6 +46,10 @@ export default {
                  noticing. From here on you work on Debian with systemd, which is what you will
                  find on servers. <em>This is not a fallback: it is the difference between the two
                  worlds, and it is this chapter's subject.</em></p>
+                 <p>Security note: to give systemd a writable cgroup, this Docker runtime starts
+                 the container with <code>--privileged</code>. Root in the container therefore has
+                 broad access to the host kernel: only run the lab commands and use a machine or
+                 VM you trust. This is not the browser sandbox.</p>
                  <p>The lab is a Debian container with systemd as PID 1. Copy the command, and in a
                  minute you are inside.</p>`,
             cmd: "git clone https://github.com/manzolo/LinuxLab && cd LinuxLab\n./lab/local/run.sh 17 1\ndocker exec -it linuxlab bash",
@@ -78,14 +86,15 @@ export default {
               { testo: { it: "Dà errore: non si può fermare una unit con Restart=always.", en: "It errors: you cannot stop a unit with Restart=always." }, giusta: false },
           ],
           spiegazione: {
-              it: `<code>Restart=</code> vale per le uscite <em>non richieste</em>: crash, kill, exit
-                   diverso da zero. Uno <code>stop</code> esplicito è una richiesta tua, e systemd
-                   la rispetta. È esattamente la distinzione che rende <code>Restart=always</code>
-                   sicuro da usare — altrimenti non potresti più fermare niente.`,
-              en: `<code>Restart=</code> applies to <em>unrequested</em> exits: crashes, kills,
-                   non-zero exits. An explicit <code>stop</code> is your request, and systemd
-                   honours it. That distinction is exactly what makes <code>Restart=always</code>
-                   safe to use — otherwise you could never stop anything again.` } },
+              it: `<code>Restart=always</code> riavvia dopo un'uscita non richiesta sia pulita
+                   (<code>0</code>) sia fallita o causata da un segnale. Non riavvia quando la
+                   terminazione è un'operazione esplicita di systemd, come <code>stop</code> o
+                   <code>restart</code>. È questa la distinzione che ti permette ancora di fermare
+                   il servizio.`,
+              en: `<code>Restart=always</code> restarts after an unrequested exit whether it is
+                   clean (<code>0</code>), failed, or caused by a signal. It does not restart when
+                   termination is an explicit systemd operation such as <code>stop</code> or
+                   <code>restart</code>. That distinction is what still lets you stop the service.` } },
 
         { kind: "pro", html: {
             it: `<p>Il salto vero rispetto a init è che systemd tiene ogni servizio in un
