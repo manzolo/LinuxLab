@@ -1,7 +1,8 @@
 # EDU-LINUX · Linux Lab
 
 **Imparare Linux con un terminale che risponde davvero.**
-22 capitoli, dalla prima riga di comando fino a mettere in piedi un server.
+Questo è **Linux Core**: 22 capitoli, dalla prima riga di comando fino a mettere in piedi
+un server — il primo di tre percorsi (vedi [I percorsi](#i-percorsi)).
 
 👉 **[Provalo online](https://manzolo.github.io/LinuxLab/)** — niente da installare, niente account.
 
@@ -144,12 +145,25 @@ lab check 17 1                   # verifica
 > capitolo 21 può non essere supportato. Per questo `run.sh check` viene prima e tutto ciò che
 > il laboratorio crea si chiama `lab-*`; `cleanup` smonta e stacca ogni cosa.
 
+## I percorsi
+
+Dal 2026-08-25 Linux Lab è una famiglia di percorsi, ognuno con il suo repo, il suo
+avanzamento e il suo capstone. La promessa è la stessa per tutti: **ogni cosa dichiarata
+viene spiegata, eseguita e verificata davvero.**
+
+| Percorso | Cosa promette | Dove gira | Stato |
+|----------|---------------|-----------|-------|
+| **Linux Core** (questo) | da zero all'amministrazione operativa di un server | browser (1–16) + Docker locale (17–22) | ✅ online |
+| **Linux Systems** | boot, kernel, dischi, recovery: capire e riparare una macchina che non parte | macchine virtuali vere (QEMU/qlab) | 🔨 in costruzione |
+| **Container Lab** | dai namespace a un servizio multi-container sicuro | browser + VM con Docker | 🔨 in costruzione |
+
 ## Cosa questo lab NON copre
 
 Detto senza girarci intorno: avvio e bootloader (GRUB, initramfs), kernel e moduli,
 partizionamento di dischi veri, virtualizzazione, container come argomento a sé,
 configurazione di rete permanente della distribuzione. Sono argomenti veri e grossi, e
-meritano più di un accenno.
+meritano più di un accenno — per questo stanno diventando **i percorsi Linux Systems e
+Container Lab** qui sopra, non capitoli in coda a questo.
 
 Su mobile il lab è **leggibile ma non praticabile**: il terminale ha bisogno di una tastiera
 vera. Il sito lo dice invece di far provare e frustrare.

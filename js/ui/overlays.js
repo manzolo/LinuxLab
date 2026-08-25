@@ -55,12 +55,20 @@ export async function apriSommario(idCorrente, vaiA) {
             const n = cap.exercises?.length || 0;
             const f = (cap.exercises || []).filter(e => fatti.has(`${cap.id}.${e.id}`)).length;
             const marchio = voce.runtime === "local" ? "💻" : voce.runtime === "hybrid" ? "🔀" : "";
-            b.append(el("span", "stato" + (n && f === n ? " pieno" : ""), `${marchio} ${n ? `${f}/${n}` : ""}`));
+            const avviso = voce.privilegiato ? "⚠️" : "";
+            if (voce.privilegiato) b.title = t("tocPrivilegiato");
+            b.append(el("span", "stato" + (n && f === n ? " pieno" : ""), `${marchio}${avviso} ${n ? `${f}/${n}` : ""}`));
             b.onclick = () => { chiudiVelo(); vaiA(voce.id); };
         }
         griglia.append(b);
     }
-    apriVelo([el("h2", null, t("navIndice")), griglia]);
+    const legenda = el("p", "toc-legenda", t("tocLegenda"));
+    const percorsi = el("div", "percorsi",
+        `<h3>${t("percorsiTitolo")}</h3>` +
+        `<p class="attivo">${t("percorsiCore")}</p>` +
+        `<p>${t("percorsiSystems")}</p>` +
+        `<p>${t("percorsiContainer")}</p>`);
+    apriVelo([el("h2", null, t("navIndice")), griglia, legenda, percorsi]);
 }
 
 // ---------------------------------------------------------------- guida "Basi"

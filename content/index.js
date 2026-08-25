@@ -25,7 +25,7 @@ export const CAPITOLI = [
     { id: "ch18", num: 18, runtime: "local",   carica: () => import("./ch18/chapter.js") },
     { id: "ch19", num: 19, runtime: "local",   carica: () => import("./ch19/chapter.js") },
     { id: "ch20", num: 20, runtime: "local",   carica: () => import("./ch20/chapter.js") },
-    { id: "ch21", num: 21, runtime: "local",   carica: () => import("./ch21/chapter.js") },
+    { id: "ch21", num: 21, runtime: "local", privilegiato: true, carica: () => import("./ch21/chapter.js") },
     { id: "ch22", num: 22, runtime: "local",   carica: () => import("./ch22/chapter.js") },
 ];
 

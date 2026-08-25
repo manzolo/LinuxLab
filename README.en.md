@@ -1,7 +1,8 @@
 # EDU-LINUX · Linux Lab
 
 **Learning Linux with a terminal that actually answers.**
-22 chapters, from your first command line to bringing up a server.
+This is **Linux Core**: 22 chapters, from your first command line to bringing up a server —
+the first of three tracks (see [The tracks](#the-tracks)).
 
 👉 **[Try it online](https://manzolo.github.io/LinuxLab/?lang=en)** — nothing to install, no account.
 
@@ -141,11 +142,25 @@ lab check 17 1                   # check
 > 21 may not be supported. This is why `run.sh check` comes first and everything the lab creates
 > is named `lab-*`; `cleanup` unmounts and detaches it all.
 
+## The tracks
+
+Since 2026-08-25 Linux Lab is a family of tracks, each with its own repo, its own progress
+and its own capstone. The promise is the same for all of them: **everything that is claimed
+gets explained, executed and actually verified.**
+
+| Track | What it promises | Where it runs | Status |
+|-------|------------------|---------------|--------|
+| **Linux Core** (this one) | from zero to hands-on server administration | browser (1–16) + local Docker (17–22) | ✅ online |
+| **Linux Systems** | boot, kernel, disks, recovery: understand and repair a machine that will not start | real virtual machines (QEMU/qlab) | 🔨 under construction |
+| **Container Lab** | from namespaces to a safely run multi-container service | browser + a VM with Docker | 🔨 under construction |
+
 ## What this lab does NOT cover
 
 Plainly: boot and bootloaders (GRUB, initramfs), kernel and modules, partitioning real disks,
 virtualisation, containers as a subject of their own, permanent distribution network
-configuration. Those are real, large topics and deserve more than a passing mention.
+configuration. Those are real, large topics and deserve more than a passing mention — which
+is why they are becoming **the Linux Systems and Container Lab tracks** above, not chapters
+tacked onto the end of this one.
 
 On mobile the lab is **readable but not practicable**: a terminal needs a real keyboard. The
 site says so rather than letting you try and get frustrated.

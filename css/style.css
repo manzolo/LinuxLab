@@ -377,6 +377,11 @@ body.pro .probox { display: block; }
 .toc .stato { margin-left: auto; font-size: 11px; color: var(--ink-faint); flex: none; }
 .toc .pieno { color: var(--verde); }
 .toc .rt { font: 10px var(--mono); color: var(--ink-faint); }
+.toc-legenda { margin: 10px 0 0; font-size: 11px; color: var(--ink-faint); }
+.percorsi { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--panel-edge); }
+.percorsi h3 { margin: 0 0 6px; font-size: 13px; }
+.percorsi p { margin: 3px 0; font-size: 12px; color: var(--ink-faint); }
+.percorsi p.attivo { color: var(--ink); }
 
 /* quaderno */
 .quaderno table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
