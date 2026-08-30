@@ -154,6 +154,11 @@ gets explained, executed and actually verified.**
 | **[Linux Systems](https://github.com/manzolo/qlab-plugin-systems-lab)** | boot, kernel, disks, recovery: understand and repair a machine that will not start | real virtual machines (QEMU/qlab) | ✅ complete — 8 chapters |
 | **[Container Lab](https://github.com/manzolo/qlab-plugin-container-lab)** | from namespaces to a safely run multi-container service | a VM with Docker (qlab) | ✅ complete — 11 chapters |
 
+Siblings on the same engine, one link away: **[SshLab](https://github.com/manzolo/SshLab)**
+(two real hosts side by side), **[CyberLab](https://github.com/manzolo/CyberLab)** (attacker and
+defender, the attack is the test) and **[FsLab](https://github.com/manzolo/FsLab)** — the root
+one directory at a time, the tour that continues chapter 5.
+
 ## What this lab does NOT cover
 
 Plainly: boot and bootloaders (GRUB, initramfs), kernel and modules, partitioning real disks,
@@ -176,7 +181,7 @@ Static site, ES modules, zero dependencies, zero build. The machine is
 
 Two decisions hold up the rest:
 
-- **One snapshot for all 22 chapters.** Cold, from 9p, the kernel takes ~46 seconds; from the
+- **One snapshot for all 24 chapters.** Cold, from 9p, the kernel takes ~46 seconds; from the
   snapshot the prompt is there in half a second. One snapshot means one URL, downloaded at the
   first chapter and a cache hit for the other 21 — and the machine stays *the same* as you
   move between chapters.

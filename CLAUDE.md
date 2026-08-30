@@ -4,7 +4,7 @@ Guida per Claude Code (claude.ai/code) quando lavora in questo repository.
 
 ## Cos'è
 
-**EDU-LINUX · Linux Lab** — 22 capitoli per imparare Linux, con un **kernel Linux vero** che
+**EDU-LINUX · Linux Lab** — 24 capitoli per imparare Linux, con un **kernel Linux vero** che
 gira nel browser via [v86](https://github.com/copy/v86). Fa parte della collana EDU-\* di
 manzolo. Sito statico bilingue IT/EN, **zero dipendenze runtime, zero build del sito**.
 
@@ -25,7 +25,7 @@ costruisce la CI.
 
 ### Le due decisioni che reggono tutto
 
-1. **Uno snapshot solo per tutti i 22 capitoli** (`images/state.bin.zst`, ~11 MB). A freddo il
+1. **Uno snapshot solo per tutti i 24 capitoli** (`images/state.bin.zst`, ~11 MB). A freddo il
    boot da 9p dura ~46 s; dallo snapshot il prompt c'è in 0,6 s. Uno solo significa una URL
    in cache per 21 capitoli, e la macchina che resta *la stessa* fra un capitolo e l'altro.
 2. **I contenuti NON stanno nell'immagine.** Vivono in `content/chNN/` ed entrano a runtime

@@ -58,6 +58,18 @@ export default {
                       en: "<code>du</code> answers \"who is eating the space\". Two different commands for two different questions: they return in chapter 13." } },
         ] },
 
+        { kind: "lead", html: {
+            it: `Questa è la mappa in venti minuti. Vuoi entrare in ogni cartella, cambiarci
+                 qualcosa e vedere la macchina comportarsi diversamente — <code>/etc</code>,
+                 <code>/var/log</code>, <code>/proc</code>, <code>/dev</code>, una per capitolo?
+                 Continua con <a href="https://manzolo.github.io/FsLab/">EDU-FS · Filesystem
+                 Lab</a>: stesso kernel, stessa verifica, quattordici cartelle.`,
+            en: `This is the twenty-minute map. Want to enter every directory, change something
+                 in it and watch the machine behave differently — <code>/etc</code>,
+                 <code>/var/log</code>, <code>/proc</code>, <code>/dev</code>, one per chapter?
+                 Continue with <a href="https://manzolo.github.io/FsLab/">EDU-FS · Filesystem
+                 Lab</a>: same kernel, same verification, fourteen directories.` } },
+
         { kind: "lab" },
 
         { kind: "pro", html: {

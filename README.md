@@ -157,6 +157,11 @@ viene spiegata, eseguita e verificata davvero.**
 | **[Linux Systems](https://github.com/manzolo/qlab-plugin-systems-lab)** | boot, kernel, dischi, recovery: capire e riparare una macchina che non parte | macchine virtuali vere (QEMU/qlab) | ✅ completo — 8 capitoli |
 | **[Container Lab](https://github.com/manzolo/qlab-plugin-container-lab)** | dai namespace a un servizio multi-container sicuro | VM con Docker (qlab) | ✅ completo — 11 capitoli |
 
+Fratelli dello stesso motore, un link e sei dentro: **[SshLab](https://github.com/manzolo/SshLab)**
+(due host veri affiancati), **[CyberLab](https://github.com/manzolo/CyberLab)** (attaccante e
+difensore, l'attacco è il test) e **[FsLab](https://github.com/manzolo/FsLab)** — la radice
+cartella per cartella, il tour che continua il capitolo 5.
+
 ## Cosa questo lab NON copre
 
 Detto senza girarci intorno: avvio e bootloader (GRUB, initramfs), kernel e moduli,
@@ -179,7 +184,7 @@ Sito statico, ES modules, zero dipendenze, zero build. La macchina è
 
 Due decisioni tengono su il resto:
 
-- **Uno snapshot solo per tutti i 22 capitoli.** A freddo, da 9p, il kernel ci mette ~46
+- **Uno snapshot solo per tutti i 24 capitoli.** A freddo, da 9p, il kernel ci mette ~46
   secondi; dallo snapshot il prompt c'è in mezzo secondo. Uno snapshot solo significa una URL
   scaricata al primo capitolo e cache hit per gli altri 21 — e la macchina resta *la stessa*
   passando di capitolo in capitolo.
