@@ -25,8 +25,16 @@ export function creaTerminale(contenitore) {
         },
     });
     term.open(contenitore);
-    term.onData(d => { if (inputAbilitato) macchina()?.serial0_send(d); });
-    macchina().add_listener("serial0-output-byte", b => term.write(String.fromCharCode(b)));
+    // La seriale trasporta BYTE, non caratteri: in uscita si consegna il byte a
+    // xterm (che ha il decoder UTF-8 con stato, e regge le sequenze spezzate),
+    // in entrata si codifica in UTF-8. Con fromCharCode l'albero di findmnt
+    // (└─, e' UTF-8 multibyte) diventava "ââ".
+    term.onData(d => {
+        if (!inputAbilitato) return;
+        const byte = new TextEncoder().encode(d);
+        macchina()?.serial0_send(Array.from(byte, c => String.fromCharCode(c)).join(""));
+    });
+    macchina().add_listener("serial0-output-byte", b => term.write(new Uint8Array([b])));
     adatta(contenitore);
     return term;
 }
@@ -81,3 +89,14 @@ export function scriviBlocco(testo) {
 }
 
 export const svegliaTerminale = () => risveglia();
+
+/** Digita testo nel terminale dell'utente come se arrivasse dalla tastiera
+ *  (stessa codifica UTF-8 dell'input vero), senza Invio: il valore lo scrive
+ *  lo studente. Poi porta il terminale in vista e gli dà il focus. */
+export function digitaNelTerminale(testo) {
+    if (!term || !inputAbilitato) return;
+    const byte = new TextEncoder().encode(testo);
+    macchina()?.serial0_send(Array.from(byte, c => String.fromCharCode(c)).join(""));
+    term.element?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    term.focus();
+}

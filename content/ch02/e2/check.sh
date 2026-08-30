@@ -1,5 +1,4 @@
 atteso=$(cat /opt/lab/state/nascosti)
-lab_fact file_nascosti_reali "$atteso"
 lab_fact elenco "$(ls -A "$LAB/scarico" | tr '\n' ' ')"
 lab_answer_eq conteggio "$atteso"
 lab_done

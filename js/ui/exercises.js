@@ -10,7 +10,7 @@
 import { t, tr } from "../i18n.js";
 import { preparaEsercizio, verificaEsercizio, ricominciaEsercizio } from "../lab/runner.js";
 import { semePer, nuovoSeme, segnaFatto, eFatto, annotaComandi } from "../storage.js";
-import { scriviNota, scriviBlocco, pulisciTerminale } from "../lab/terminal.js";
+import { scriviNota, scriviBlocco, pulisciTerminale, digitaNelTerminale } from "../lab/terminal.js";
 import { shell } from "../lab/agent.js";
 
 const el = (tag, cls, html) => {
@@ -87,7 +87,11 @@ const inFila = azione => {
 /** Per chi semina da fuori (il ripristino della macchina): stessa fila. */
 export const accodaSemina = azione => inFila(azione);
 
-export async function disegnaEsercizi(cap) {
+// L'esercizio il cui mondo e' gia' nella macchina: un ridisegno "solo testo" (cambio
+// di lingua) non lo risemina, altrimenti cancellerebbe il lavoro fatto.
+let mondoPronto = null;
+
+export async function disegnaEsercizi(cap, opzioni = {}) {
     capCorrente = cap;
     esCorrente = null;
     generazione++;
@@ -118,10 +122,10 @@ export async function disegnaEsercizi(cap) {
     // Il primo non ancora fatto si apre da solo: e' quasi sempre quello che vuoi.
     const primo = cap.exercises.find(e => !eFatto(`${cap.id}.${e.id}`)) || cap.exercises[0];
     const nodo = contenitore.querySelector(`[data-es="${primo.id}"]`);
-    if (nodo) await apri(cap, primo, nodo);
+    if (nodo) await apri(cap, primo, nodo, opzioni);
 }
 
-async function apri(cap, es, box) {
+async function apri(cap, es, box, opzioni = {}) {
     const gia = box.classList.contains("aperto");
     contenitore.querySelectorAll(".es").forEach(b => b.classList.remove("aperto"));
     const mia = ++generazione;
@@ -133,6 +137,16 @@ async function apri(cap, es, box) {
     const corpo = box.querySelector(".es-corpo");
     corpo.replaceChildren();
     corpo.append(el("p", "es-brief", tr(es.brief)));
+    // "Consegna il numero" da solo non dice COME: la sintassi di lab answer
+    // stava soltanto dentro l'aiuto, e chi non lo apre resta bloccato. Il
+    // pulsante digita il comando senza Invio: il valore resta allo studente.
+    if (es.tipo === "risposta") {
+        const p = el("p", "es-come-consegnare", t("comeConsegnare") + " ");
+        const b = el("button", "btn mini", t("comeConsegnareBtn"));
+        b.onclick = () => digitaNelTerminale("lab answer ");
+        p.append(b);
+        corpo.append(p);
+    }
     const attrezzi = costruisciAttrezzi(es);
     if (attrezzi) corpo.append(attrezzi);
 
@@ -265,7 +279,9 @@ async function apri(cap, es, box) {
     // Solo adesso, con i gestori gia' collegati, si prepara il mondo e si accendono
     // i pulsanti. L'ordine e' la correzione: prima i gestori, poi l'attesa.
     if (pronta) {
-        await prepara(semePer(`${cap.id}.${es.id}`));
+        const chiave = `${cap.id}.${es.id}`;
+        if (!(opzioni.soloTesto && mondoPronto === chiave)) await prepara(semePer(chiave));
+        mondoPronto = chiave;
         if (mia !== generazione) return;   // nel frattempo si e' aperto altro
         btnVer.disabled = btnRic.disabled = btnNuo.disabled = false;
         // I gemelli nell'intestazione premono questi stessi bottoni: stessa

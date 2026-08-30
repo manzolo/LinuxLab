@@ -123,9 +123,14 @@ lab_done() {
 lab_answer_read() { tr -d ' \t\n\r' < "$LAB_STATE/answer" 2>/dev/null; }
 
 # lab_answer_eq ID ATTESO — confronta la risposta consegnata con quella
-# ricalcolata dal mondo seminato (mai con una costante scritta a mano)
+# ricalcolata dal mondo seminato (mai con una costante scritta a mano).
+# ATTENZIONE: qui NON si passa da lab_eq, che stamperebbe `want=<atteso>`
+# nel verdetto — basterebbe cliccare Verifica a vuoto e leggere la risposta.
+# Il verdetto mostra solo cio' che lo studente ha consegnato.
+# (Falla trovata su FsLab il 2026-08-30, chiusa qui alla radice.)
 lab_answer_eq() {
     a=$(lab_answer_read)
     lab_fact answer "${a:-(nessuna risposta consegnata)}"
-    lab_eq "$1" "$2" "$a"
+    if [ "$a" = "$2" ]; then lab_check "$1" 0
+    else lab_check "$1" 1 "${a:-(vuoto)}"; fi
 }
