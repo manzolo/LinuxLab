@@ -97,6 +97,23 @@ const salta = d => {
 $("btnPrec").onclick = () => salta(-1);
 $("btnSucc").onclick = () => salta(1);
 
+// «Segnala un problema»: porta a una issue GitHub gia' compilata con cio' che un
+// visitatore non penserebbe mai a scrivere — capitolo, lingua, stato del
+// laboratorio e browser. L'href si costruisce AL CLICK, quando quei dati sono
+// veri; l'href statico (issue vuota) resta il fallback se il modulo non parte.
+$("linkSegnala").addEventListener("click", e => {
+    const a = e.currentTarget;
+    const cap = CAPITOLI.find(c => c.id === idCorrente);
+    const titolo = `[cap ${cap ? cap.num : "?"}] `;
+    const corpo = t("segnalaCorpo",
+        location.href,
+        cap ? t("capDi", cap.num, CAPITOLI.length) : "—",
+        getLang(),
+        $("labStato")?.textContent || "—",
+        navigator.userAgent);
+    a.href = `${a.href.split("?")[0]}?title=${encodeURIComponent(titolo)}&body=${encodeURIComponent(corpo)}`;
+});
+
 document.addEventListener("keydown", e => {
     if (e.target.closest(".terminale") || !$("velo").hidden) return;
     if (e.key === "ArrowLeft") salta(-1);
