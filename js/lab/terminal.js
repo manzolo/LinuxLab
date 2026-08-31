@@ -58,8 +58,16 @@ export function adatta(contenitore) {
     if (!term || !contenitore?.clientWidth) return;
     const p = term._core?._renderService?.dimensions?.css?.cell;
     if (!p?.width || !p?.height) return;
-    const cols = Math.max(40, Math.floor(contenitore.clientWidth / p.width));
-    const rows = Math.max(10, Math.floor(contenitore.clientHeight / p.height));
+    // clientWidth/clientHeight comprendono il padding, mentre xterm viene
+    // disegnato nel content box. Contarlo come spazio disponibile rendeva il
+    // canvas piu' largo del viewport, soprattutto sui telefoni.
+    const stile = getComputedStyle(contenitore);
+    const larghezza = contenitore.clientWidth
+        - parseFloat(stile.paddingLeft) - parseFloat(stile.paddingRight);
+    const altezza = contenitore.clientHeight
+        - parseFloat(stile.paddingTop) - parseFloat(stile.paddingBottom);
+    const cols = Math.max(20, Math.floor(larghezza / p.width));
+    const rows = Math.max(10, Math.floor(altezza / p.height));
     if (cols !== term.cols || rows !== term.rows) {
         term.resize(cols, rows);
         // La macchina non sa che la finestra e' cambiata. Glielo diciamo dal CANALE
