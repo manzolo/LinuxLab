@@ -123,9 +123,18 @@ onLangChange(() => {
 
 const stato = $("labStato");
 onProgresso((fase, frazione) => {
-    if (fase === "scarico") stato.textContent = t("labScarico", Math.round(frazione * 100));
-    if (fase === "avvio") stato.textContent = t("labAvvio");
-    if (fase === "pronta") { stato.textContent = t("labPronta"); stato.className = "lab-stato pronta"; }
+    let testo;
+    if (fase === "scarico") testo = t("labScarico", Math.round(frazione * 100));
+    if (fase === "avvio") testo = t("labAvvio");
+    // `pronta` qui significa soltanto che v86 ha ripristinato lo snapshot. Il
+    // mondo dell'esercizio deve ancora essere seminato: dichiarare gia' pronta
+    // la macchina creava proprio il falso sblocco visibile al primo caricamento.
+    if (fase === "pronta") testo = t("labPreparazione");
+    if (!testo) return;
+    stato.textContent = testo;
+    stato.className = "lab-stato preparazione";
+    if ($("pannelloLab").classList.contains("preparazione"))
+        $("terminale").dataset.busyLabel = testo;
 });
 
 // Reimposta la macchina: il ripristino dello snapshot blocca la pagina per qualche
@@ -189,6 +198,11 @@ function impostaBancoInPreparazione(attiva) {
 
 inizializzaEsercizi($("esercizi"), aggiornaProgresso, impostaBancoInPreparazione);
 
+// Il banco nasce occupato, non soltanto quando parte il seed. Lo snapshot mostra
+// il prompt prima che il mondo del primo esercizio sia pronto: senza questo blocco
+// continuo il terminale sembra utilizzabile per un istante e poi si riblocca.
+impostaBancoInPreparazione(true);
+
 // Dopo un ripristino della macchina, il mondo dell'esercizio aperto e' sparito
 // insieme al resto: va riseminato, o il primo `Verifica` fallirebbe senza motivo.
 async function riseminaEsercizioCorrente() {
@@ -215,6 +229,10 @@ async function riseminaEsercizioCorrente() {
         await attendiAgente();
         macchinaPronta(true);
         await vaiA(idCorrente, false);   // ridisegna gli esercizi ora che la macchina c'e'
+        // Scioglie il blocco dato alla nascita del banco. Il conteggio e'
+        // bilanciato: le semine dentro `vaiA` incrementano e decrementano il
+        // loro, e senza questo `false` il banco resterebbe occupato per sempre.
+        impostaBancoInPreparazione(false);
     } catch (e) {
         stato.className = "lab-stato errore";
         stato.innerHTML = t("labErrore");

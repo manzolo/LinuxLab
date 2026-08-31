@@ -5,7 +5,11 @@ import { macchina, risveglia } from "./machine.js";
 import { shell } from "./agent.js";
 
 let term = null;
-let inputAbilitato = true;
+// All'avvio il prompt dello snapshot compare prima che il primo esercizio sia
+// stato seminato. Tenerlo scrivibile in quella finestra mostrava per un istante
+// un banco "pronto", per poi bloccarlo mentre il mondo veniva ricostruito.
+// L'interfaccia lo abilita esplicitamente soltanto alla fine della preparazione.
+let inputAbilitato = false;
 
 export function creaTerminale(contenitore) {
     if (term) { term.open(contenitore); adatta(contenitore); return term; }
